@@ -41,16 +41,25 @@ describe('cleanSplat', () => {
   it('keeps a clean floor untouched', () => {
     const { splat, stats } = cleanSplat(makeSplat());
     expect(splat.count).toBe(FLOOR);
-    expect(stats.removed).toEqual({ faint: 0, huge: 0, outside: 0, floaters: 0 });
+    expect(stats.removed).toEqual({ faint: 0, huge: 0, outside: 0 });
   });
-  it('removes near-invisible splats', () => {
-    const { splat, stats } = cleanSplat(makeSplat([{ x: 0, y: 0.1, z: 0, opacity: logit(0.02) }]));
-    expect(splat.count).toBe(FLOOR);
+  it('removes only splats fainter than the 3DGS training prune threshold', () => {
+    const { splat, stats } = cleanSplat(makeSplat([
+      { x: 0, y: 0.1, z: 0, opacity: logit(0.001) },
+      { x: 0, y: 0.1, z: 0.1, opacity: logit(0.02) }, // faint but real: thin layers build up colour
+    ]));
+    expect(splat.count).toBe(FLOOR + 1);
     expect(stats.removed.faint).toBe(1);
   });
-  it('removes giant blurry blobs', () => {
-    const big = Math.log(5);
-    const { splat, stats } = cleanSplat(makeSplat([{ x: 0, y: 3, z: 0, scale_0: big, scale_1: big, scale_2: big }]));
+  it('keeps large flat splats that cover walls and ceilings', () => {
+    const wall = Math.log(0.6); // 12x the typical 5 cm splat, but small next to a 10 m room
+    const { splat, stats } = cleanSplat(makeSplat([{ x: 0, y: 2, z: 0, scale_0: wall, scale_1: wall, scale_2: Math.log(0.01) }]));
+    expect(splat.count).toBe(FLOOR + 1);
+    expect(stats.removed.huge).toBe(0);
+  });
+  it('removes blobs bigger than a tenth of the whole scan', () => {
+    const big = Math.log(3); // 3 m blob in a 10 m scan
+    const { splat, stats } = cleanSplat(makeSplat([{ x: 0, y: 2, z: 0, scale_0: big, scale_1: big, scale_2: big }]));
     expect(splat.count).toBe(FLOOR);
     expect(stats.removed.huge).toBe(1);
   });
@@ -59,10 +68,9 @@ describe('cleanSplat', () => {
     expect(splat.count).toBe(FLOOR);
     expect(stats.removed.outside).toBe(1);
   });
-  it('removes a lone floater hanging in mid-air', () => {
-    const { splat, stats } = cleanSplat(makeSplat([{ x: 1, y: 2, z: 1 }]));
-    expect(splat.count).toBe(FLOOR);
-    expect(stats.removed.floaters).toBe(1);
+  it('leaves floaters inside the scan alone (that is SplatTransform\'s --floaters job)', () => {
+    const { splat } = cleanSplat(makeSplat([{ x: 1, y: 2, z: 1 }]));
+    expect(splat.count).toBe(FLOOR + 1);
   });
   it('keeps only splats inside --box when one is given', () => {
     const { splat, stats } = cleanSplat(makeSplat(), { box: [-1, -1, -1, 1, 1, 1] });
@@ -71,7 +79,7 @@ describe('cleanSplat', () => {
     expect(splat.count).toBeGreaterThan(0);
   });
   it('reports before and after counts', () => {
-    const { stats } = cleanSplat(makeSplat([{ x: 0, y: 0.1, z: 0, opacity: logit(0.02) }]));
+    const { stats } = cleanSplat(makeSplat([{ x: 0, y: 0.1, z: 0, opacity: logit(0.001) }]));
     expect(stats.before).toBe(FLOOR + 1);
     expect(stats.after).toBe(FLOOR);
   });

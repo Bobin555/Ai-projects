@@ -24,18 +24,24 @@ One command cleans and compresses a raw scan into `local-assets/site.sog`:
 npm run clean-splat -- ~/Downloads/site.ply
 ```
 
-It removes near-invisible haze, giant blurry blobs, far-away junk and
-floaters, then compresses the result. When it finishes it prints a report:
+It is deliberately careful. It only removes:
+- splats too faint to see (below the threshold 3DGS training itself prunes at)
+- far-away junk outside the main scan
+- blobs wider than a tenth of the whole scan
+
+Then it compresses the result. When it finishes it prints a report:
 
 ```
-Splats:  2.10M → 1.40M
-Removed: 210K faint · 12K huge blobs · 300K far-away · 180K floaters
-Size:    500 MB → 62 MB
+Splats:  2.10M → 1.95M
+Removed: 40K invisible · 100K far-away · 2K huge blobs
+Size:    500 MB → 90 MB
 ```
 
 Options:
 - `--box minX,minY,minZ,maxX,maxY,maxZ` keeps only what's inside your own box
   (use `?debug` and **P** in the app to find the corners).
+- `--floaters` also removes floating specks, using SplatTransform's own filter
+  (needs the Mac's GPU). Check the result: it can thin out glass and plants.
 - `--out path.sog` writes the result somewhere else.
 - `--keep-ply` also keeps the cleaned, uncompressed `.ply`.
 
