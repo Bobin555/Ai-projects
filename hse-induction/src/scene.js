@@ -26,6 +26,8 @@ export function createScene(canvas, site, onProgress = () => {}) {
     asset.once('load', () => {
       const splat = new pc.Entity('splat');
       splat.addComponent('gsplat', { asset });
+      // Scans often come out Z-up or flipped; site.json can turn them upright.
+      if (site.splatRotation) splat.setEulerAngles(...site.splatRotation);
       app.root.addChild(splat);
       app.start();
       resolve({ app, camera, colliders: site.colliders });

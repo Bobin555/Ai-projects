@@ -19,6 +19,7 @@ export function enableDebug(app, colliders, player) {
   }
 
   app.keyboard.on(pc.EVENT_KEYDOWN, async (e) => {
+    if (e.key === pc.KEY_F) { toast(player.toggleFly() ? 'Fly mode on: Space up, C down' : 'Fly mode off'); return; }
     if (e.key !== pc.KEY_P) return;
     const text = JSON.stringify(player.getPosition().map((n) => Math.round(n * 100) / 100));
     try { await navigator.clipboard.writeText(text); toast(`Copied ${text}`); }

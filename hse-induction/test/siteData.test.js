@@ -57,3 +57,15 @@ describe('loadSite', () => {
     }
   });
 });
+
+describe('splatRotation', () => {
+  it('is optional', () => {
+    expect(validateSite(sample())).toEqual([]);
+  });
+  it('accepts 3 numbers in degrees', () => {
+    expect(errorsFor(d => { d.splatRotation = [-90, 0, 0]; })).toBe('');
+  });
+  it('rejects anything else', () => {
+    expect(errorsFor(d => { d.splatRotation = [-90, 0]; })).toContain('splatRotation');
+  });
+});

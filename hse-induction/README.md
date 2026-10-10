@@ -14,7 +14,11 @@ Design: `../docs/superpowers/specs/2026-10-10-hse-splat-induction-design.md`
 4. `npm test` runs the unit tests.
 
 Add `?debug` to the address to see the collision boxes in red. Press **P**
-to copy your position, then paste it into `public/site.json`.
+to copy your position, then paste it into `public/site.json`. Press **F** to
+fly through walls (Space up, C down) while you set up a new scan.
+
+Look around by clicking the scene and moving the mouse, by dragging with a
+mouse button held, or with the arrow keys.
 
 ## Prepare the splat (once per scan)
 
@@ -55,6 +59,9 @@ and set `splatUrl` in `public/site.json` to its address.
 ## Site data (`public/site.json`)
 
 - `splatUrl`: where the splat is loaded from.
+- `splatRotation` (optional): turns the scan upright, in degrees `[x, y, z]`.
+  Scans from nerfstudio/COLMAP are often Z-up: try `[-90, 0, 0]`, and if it's
+  upside down, `[90, 0, 0]`.
 - `start.position`: where the worker's feet start, as `[x, y, z]`. `start.yaw`
   is the direction they face, in degrees.
 - `colliders`: invisible walls and floors. `position` is the box centre;
