@@ -40,7 +40,7 @@ export function hideCard() {
 
 // items: [{ title, found }]
 export function renderChecklist(found, total, items) {
-  el('checklist-count').textContent = `${found} of ${total} found`;
+  el('checklist-count').textContent = total ? `${found} of ${total} found` : 'No hotspots yet';
   el('checklist-items').replaceChildren(...items.map((it) => {
     const li = document.createElement('li');
     li.textContent = it.title;

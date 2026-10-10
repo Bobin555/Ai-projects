@@ -8,6 +8,7 @@ export function validateSite(data) {
 
   if (typeof d.splatUrl !== 'string' || !d.splatUrl.trim()) errors.push('splatUrl: required text');
   if (d.splatRotation !== undefined && !isVec3(d.splatRotation)) errors.push('splatRotation: needs 3 numbers (degrees)');
+  if (d.splatPosition !== undefined && !isVec3(d.splatPosition)) errors.push('splatPosition: needs 3 numbers (metres)');
   if (!isVec3(d.start?.position)) errors.push('start.position: needs 3 numbers');
   if (d.start?.yaw !== undefined && !Number.isFinite(d.start.yaw)) errors.push('start.yaw: must be a number');
 

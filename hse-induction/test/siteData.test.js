@@ -69,3 +69,13 @@ describe('splatRotation', () => {
     expect(errorsFor(d => { d.splatRotation = [-90, 0]; })).toContain('splatRotation');
   });
 });
+
+describe('splatPosition and empty hotspots', () => {
+  it('splatPosition is optional and takes 3 numbers', () => {
+    expect(errorsFor(d => { d.splatPosition = [1, 2, 3]; })).toBe('');
+    expect(errorsFor(d => { d.splatPosition = [1, 2]; })).toContain('splatPosition');
+  });
+  it('allows a site with no hotspots yet', () => {
+    expect(errorsFor(d => { d.hotspots = []; })).toBe('');
+  });
+});
