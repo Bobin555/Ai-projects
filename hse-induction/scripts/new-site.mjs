@@ -55,10 +55,15 @@ console.log('Building walls and floor…');
 const grid = buildColliders(Float32Array.from(solid));
 if (!grid.floorCells.size) fail("Couldn't find a floor. Try --up/--flip, or level the scan in SuperSplat first.");
 const start = pickStart(grid);
+const candidateList = () => level.candidates
+  .map((c, i) => `      --up ${i + 1}: [${round(c.direction).join(', ')}] ${Math.round(c.share * 100)}% of flat surfaces${i === 0 && !up ? ' (used this time)' : ''}`)
+  .join('\n');
 if (!start) {
-  fail(`Couldn't find open floor to start on. The room measures ${level.roomHeight.toFixed(1)} m floor to ceiling:
-  - if that's far from a real room (2-5 m), the scan isn't in metres; rescale it in SuperSplat first
-  - otherwise try --up/--flip, or level the scan in SuperSplat first.`);
+  fail(`Couldn't find open floor to start on. The room measures ${level.roomHeight.toFixed(1)} m floor to ceiling.
+  - Most likely "up" was picked wrong (a wall instead of the floor). Try the other candidates:
+${candidateList()}
+    and add --flip if the result is upside down.
+  - If every candidate fails and the height is far from 2-5 m, the scan isn't in metres: rescale it in SuperSplat first.`);
 }
 
 console.log('Compressing…');
@@ -101,12 +106,12 @@ Done in ${((Date.now() - t0) / 1000).toFixed(0)} s
   Saved:    ${out}
             ${siteFile}`);
 if (!up && (confidence < 40 || level.ambiguous)) {
-  const list = level.candidates.map((c, i) => `      ${i + 1}: [${round(c.direction).join(', ')}] ${Math.round(c.share * 100)}% of flat surfaces`).join('\n');
+  const list = candidateList();
   console.log(`
   ⚠ Not sure which way is up${level.ambiguous ? ' (two directions are close; long corridors do this)' : ''}.
     Candidates:
 ${list}
-    If the room looks sideways, rerun with --up 2 (or 3); if upside down, add --flip.`);
+    If the room looks sideways, rerun with the next one; if upside down, add --flip.`);
 }
 if (level.roomHeight < 2 || level.roomHeight > 5) {
   console.log(`
