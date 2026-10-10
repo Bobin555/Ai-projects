@@ -4,11 +4,14 @@ import { createPlayer } from './player.js';
 import { enableDebug } from './debug.js';
 import { createHotspots } from './hotspots.js';
 import { createChecklist } from './checklist.js';
+import { enableSetup } from './setup.js';
 import * as pc from 'playcanvas';
 import { setLoading, showError, showCard, hideCard, renderChecklist, showDone } from './ui.js';
 
 const canvas = document.getElementById('app');
-const debug = new URLSearchParams(location.search).has('debug');
+const params = new URLSearchParams(location.search);
+const setup = params.has('setup');
+const debug = params.has('debug') || setup;
 
 async function startScene(site) {
   setLoading(NaN);
@@ -25,7 +28,7 @@ async function startScene(site) {
   const refresh = () => renderChecklist(checklist.found(), checklist.total(),
     site.hotspots.map((h) => ({ title: h.title, found: checklist.isFound(h.id) })));
   refresh();
-  createHotspots(scene.app, site.hotspots, player.getPosition, {
+  const rings = createHotspots(scene.app, setup ? [] : site.hotspots, player.getPosition, {
     onEnter: (entered) => {
       const wasComplete = checklist.isComplete();
       entered.forEach((h) => checklist.markFound(h.id));
@@ -39,6 +42,7 @@ async function startScene(site) {
   });
   scene.app.keyboard.on(pc.EVENT_KEYDOWN, (e) => { if (e.key === pc.KEY_E) hideCard(); });
   if (debug) enableDebug(scene.app, scene.colliders, player);
+  if (setup) enableSetup({ app: scene.app, site, player, rings });
   const state = { ...scene, player, checklist };
   if (debug) window.__hse = state;
   return state;
