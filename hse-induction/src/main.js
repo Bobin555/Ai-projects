@@ -30,6 +30,7 @@ async function startScene(site) {
   refresh();
   const rings = createHotspots(scene.app, setup ? [] : site.hotspots, player.getPosition, {
     onEnter: (entered) => {
+      if (setup) return; // placing hotspots isn't the induction: no checklist, no completion screen
       const wasComplete = checklist.isComplete();
       entered.forEach((h) => checklist.markFound(h.id));
       refresh();

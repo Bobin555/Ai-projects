@@ -1,6 +1,7 @@
 // hotspots.md: "## Title" then 2-3 "- point" lines per hotspot. Anything else is ignored.
 
-export const slug = (title) => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+// Letters and digits in any script, so non-Latin titles still get a usable, distinct id.
+export const slug = (title) => title.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
 
 export function parseHotspotsMd(text) {
   const items = [];
@@ -40,4 +41,10 @@ export function mergeHotspots(items, placed) {
     const p = byId.get(it.id);
     return p ? [{ ...it, position: p.position, radius: p.radius }] : [];
   });
+}
+
+// Titles of placed hotspots that no longer appear in the file (usually a renamed heading).
+export function unmatchedPlaced(items, placed) {
+  const ids = new Set(items.map((it) => it.id));
+  return placed.filter((p) => !ids.has(p.id)).map((p) => p.title);
 }

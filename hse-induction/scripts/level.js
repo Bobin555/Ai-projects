@@ -67,6 +67,7 @@ export function levelSplat(splat, { up: upAxis, flip = false } = {}) {
   const [xi, yi, zi] = ['x', 'y', 'z'].map((p) => props.indexOf(p));
   const pos = (n) => [data[n * stride + xi], data[n * stride + yi], data[n * stride + zi]];
 
+  const missingProps = ['scale_0', 'scale_1', 'scale_2', 'rot_0', 'rot_1', 'rot_2', 'rot_3'].filter((p) => !props.includes(p));
   const flats = flatSplats(splat);
   const candidates = flats?.length ? dominantNormal(flats) : [];
   const forcedAxis = typeof upAxis === 'string';
@@ -146,5 +147,5 @@ export function levelSplat(splat, { up: upAxis, flip = false } = {}) {
   const roomHeight = percentile(levelledY, 0.99);
 
   const e = q.getEulerAngles();
-  return { rotation: [e.x, e.y, e.z], position: [-cx, -floorH, -cz], positions, confidence, upAxisScan: up, candidates, ambiguous, roomHeight };
+  return { rotation: [e.x, e.y, e.z], position: [-cx, -floorH, -cz], positions, confidence, upAxisScan: up, candidates, ambiguous, roomHeight, missingProps };
 }

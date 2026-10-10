@@ -1,5 +1,5 @@
 import * as pc from 'playcanvas';
-import { parseHotspotsMd, mergeHotspots } from './hotspotsMd.js';
+import { parseHotspotsMd, mergeHotspots, unmatchedPlaced } from './hotspotsMd.js';
 
 const RADIUS = 1.5;
 const el = (id) => document.getElementById(id);
@@ -24,11 +24,15 @@ export async function enableSetup({ app, site, player, rings }) {
     return;
   }
 
+  const dropped = unmatchedPlaced(items, site.hotspots);
   let placed = mergeHotspots(items, site.hotspots);
   const order = placed.map((h) => h.id); // undo stack
   placed.forEach((h) => rings.add(h));
   let skipped = new Set();
-  let message = '';
+  // A renamed heading gets a new id, so its old position can't carry over: say so before the next save drops it.
+  let message = dropped.length
+    ? `Not in hotspots.md (renamed or removed), will be dropped when you place the next one: ${dropped.join(', ')}`
+    : '';
 
   const next = () => items.find((it) => !placed.some((p) => p.id === it.id) && !skipped.has(it.id));
 

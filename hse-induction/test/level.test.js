@@ -89,3 +89,25 @@ describe('levelSplat: ambiguity and size', () => {
     expect(levelSplat(splat).ambiguous).toBe(false);
   });
 });
+
+describe('levelSplat: scans without orientation data', () => {
+  it('names the missing properties', () => {
+    const { splat } = makeRoom();
+    expect(levelSplat(stripProps(splat, ['x', 'y', 'z'])).missingProps).toEqual(['scale_0', 'scale_1', 'scale_2', 'rot_0', 'rot_1', 'rot_2', 'rot_3']);
+    expect(levelSplat(splat).missingProps).toEqual([]);
+  });
+  it('finds the floor when no splat is flat, even with junk below it', () => {
+    const { splat, kinds } = makeRoom();
+    const stride = splat.props.length;
+    const junk = Math.ceil(splat.count * 0.03); // reflections under shiny tiles
+    const data = new Float32Array((splat.count + junk) * stride);
+    data.set(splat.data);
+    for (let j = 0; j < junk; j++) data.set(splat.data.subarray(0, stride), (splat.count + j) * stride);
+    for (let j = 0; j < junk; j++) data[(splat.count + j) * stride + 1] = -0.4;
+    const s0 = splat.props.indexOf('scale_0');
+    for (let n = 0; n < splat.count + junk; n++) data.fill(Math.log(0.05), n * stride + s0, n * stride + s0 + 3);
+    const { positions } = levelSplat({ props: splat.props, count: splat.count + junk, data }, { up: 'y' });
+    const floor = kinds.flatMap((k, n) => (k === 'floor' ? [positions[n * 3 + 1]] : []));
+    expect(Math.max(...floor.map(Math.abs))).toBeLessThan(0.05);
+  });
+});

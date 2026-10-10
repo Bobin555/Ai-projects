@@ -39,6 +39,10 @@ const { splat, stats } = cleanSplat(parsePly(readFileSync(input)), { box });
 
 console.log('Levelling…');
 const level = levelSplat(splat, { up, flip });
+if (level.missingProps.length) {
+  console.log(`  This scan has no orientation data (missing ${level.missingProps.join(', ')}),
+  so it can't find "up" by itself. Using --up ${typeof up === 'string' ? up : 'y'}; check the result looks upright.`);
+}
 
 // Walls and floor come from solid-looking splats only: faint ones are haze, not surfaces.
 const oi = splat.props.indexOf('opacity');
@@ -58,9 +62,17 @@ if (!start) {
 }
 
 console.log('Compressing…');
-const { floatersDone } = compressSplat(splat, out, { floaters });
+let floatersDone;
+try {
+  ({ floatersDone } = compressSplat(splat, out, { floaters }));
+} catch (err) {
+  fail(err.message);
+}
 
-const previous = existsSync(siteFile) ? JSON.parse(readFileSync(siteFile, 'utf8')) : {};
+let previous = {};
+if (keepHotspots && existsSync(siteFile)) {
+  try { previous = JSON.parse(readFileSync(siteFile, 'utf8')); } catch { console.log('  Existing site.json is unreadable, so no hotspots were kept.'); }
+}
 const site = {
   splatUrl: relative(root, out).split('\\').join('/'),
   splatRotation: round(level.rotation, 3),

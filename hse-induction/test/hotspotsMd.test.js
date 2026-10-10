@@ -58,3 +58,18 @@ describe('mergeHotspots', () => {
     expect(mergeHotspots([], placed)).toEqual([]);
   });
 });
+
+describe('titles and renames', () => {
+  it('keeps non-Latin titles usable', () => {
+    const { items, errors } = parseHotspotsMd('## 急救箱\n- a\n- b\n## 灭火器\n- c\n- d\n');
+    expect(errors).toEqual([]);
+    expect(items[0].id).not.toBe('');
+    expect(items[0].id).not.toBe(items[1].id);
+  });
+  it('lists placed hotspots that the file no longer has, so a rename can be spotted', async () => {
+    const { unmatchedPlaced } = await import('../src/hotspotsMd.js');
+    const { items } = parseHotspotsMd('## Card return box\n- a\n- b\n');
+    const placed = [{ id: 'card-drop-box', title: 'Card drop box', points: ['a', 'b'], position: [1, 0, 2], radius: 1.5 }];
+    expect(unmatchedPlaced(items, placed)).toEqual(['Card drop box']);
+  });
+});

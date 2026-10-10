@@ -33,7 +33,14 @@ console.log(`Reading ${input} (${mb(statSync(input).size)})…`);
 const { splat, stats } = cleanSplat(parsePly(readFileSync(input)), { box });
 
 console.log('Compressing…');
-const { floatersDone, cleanedPly } = compressSplat(splat, out, { floaters, keepPly });
+let floatersDone;
+let cleanedPly;
+try {
+  ({ floatersDone, cleanedPly } = compressSplat(splat, out, { floaters, keepPly }));
+} catch (err) {
+  console.error(err.message);
+  process.exit(1);
+}
 
 const r = stats.removed;
 console.log(`
