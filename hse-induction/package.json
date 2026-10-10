@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "clean-splat": "node scripts/clean-splat.mjs"
+    "clean-splat": "node scripts/clean-splat.mjs",
+    "new-site": "node scripts/new-site.mjs"
   },
   "devDependencies": {
     "@playcanvas/splat-transform": "^3.10.1",

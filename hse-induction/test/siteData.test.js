@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { validateSite } from '../src/siteData.js';
 
-const sample = () => JSON.parse(readFileSync(new URL('../public/site.json', import.meta.url), 'utf8'));
+const sample = () => JSON.parse(readFileSync(new URL('./fixtures/site.json', import.meta.url), 'utf8'));
 const errorsFor = (mutate) => { const d = sample(); mutate(d); return validateSite(d).join('\n'); };
 
 describe('validateSite', () => {

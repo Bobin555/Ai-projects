@@ -20,6 +20,45 @@ fly through walls (Space up, C down) while you set up a new scan.
 Look around by clicking the scene and moving the mouse, by dragging with a
 mouse button held, or with the arrow keys.
 
+## New site from a scan (recommended)
+
+1. Turn the scan into a walkable site:
+   ```
+   npm run new-site -- ~/Downloads/scan.ply
+   ```
+   This cleans the scan, levels it (finds the floor and turns it upright),
+   builds walls and a floor from it, picks a start point, compresses it, and
+   writes `public/site.json`. Read the report it prints. If the room comes
+   out sideways or upside down, rerun with `--up x`, `--up y` or `--up z`,
+   and/or `--flip`.
+
+   Options: `--box …` keeps only part of the scan (see below), `--floaters`
+   removes floating specks, and `--keep-hotspots` keeps hotspots already
+   placed.
+
+2. Write the hotspot text into `public/hotspots.md`. Ask Claude Code, e.g.:
+   > Write public/hotspots.md for this site: a reception area with a
+   > wellbeing room and a card drop box where visitor cards must be dropped
+   > after 5 pm. One "## Title" per hotspot with 2-3 "- " safety points.
+
+   Check the text yourself: it is safety information.
+
+   ```markdown
+   ## Card drop box
+   - Drop your visitor card here when you leave
+   - After 5 pm, cards must go in this box, not to reception
+   ```
+
+3. Place the hotspots: run `npm run dev` and open `http://localhost:5173/?setup`.
+   The panel shows the next hotspot to place.
+   - **F**: fly (Space up, C down)
+   - **H**: place the hotspot where you stand. It saves automatically.
+   - **N**: skip
+   - **Backspace**: undo the last one
+
+   To change the text later, edit `hotspots.md` and open `?setup` once. The
+   positions stay where they are.
+
 ## Prepare the splat (once per scan)
 
 One command cleans and compresses a raw scan into `local-assets/site.sog`:

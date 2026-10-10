@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { checkSave } from '../scripts/saveSite.js';
 
-const sample = readFileSync(new URL('../public/site.json', import.meta.url), 'utf8');
+const sample = readFileSync(new URL('./fixtures/site.json', import.meta.url), 'utf8');
 
 describe('checkSave', () => {
   it('accepts a valid site and pretty-prints it', () => {

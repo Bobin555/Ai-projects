@@ -1,9 +1,9 @@
 // Usage: npm run clean-splat -- <input.ply> [--box minX,minY,minZ,maxX,maxY,maxZ] [--floaters] [--out local-assets/site.sog] [--keep-ply]
-import { readFileSync, writeFileSync, statSync, mkdirSync, rmSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parsePly, writePly, cleanSplat } from './splatClean.js';
+import { parsePly, cleanSplat } from './splatClean.js';
+import { compressSplat } from './compress.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -32,24 +32,8 @@ const t0 = Date.now();
 console.log(`Reading ${input} (${mb(statSync(input).size)})…`);
 const { splat, stats } = cleanSplat(parsePly(readFileSync(input)), { box });
 
-mkdirSync(dirname(out), { recursive: true });
-const cleanedPly = out.replace(/\.[^.]+$/, '') + '.cleaned.ply';
-writeFileSync(cleanedPly, writePly(splat));
-
 console.log('Compressing…');
-// -N drops splats with NaN/Inf values; -F (opt-in) drops splats that don't add to any solid surface.
-// Both run inside SplatTransform. Uses the GPU when there is one.
-const compress = (extra, actions) => execFileSync(join(root, 'node_modules/.bin/splat-transform'), ['-w', ...extra, cleanedPly, '-N', ...actions, out], { stdio: 'pipe' });
-let floatersDone = floaters;
-try {
-  compress([], floaters ? ['-F'] : []);
-} catch {
-  console.log('No usable GPU, compressing on the CPU instead (slower)…');
-  if (floaters) console.log('  --floaters needs a GPU, so floaters were left in.');
-  floatersDone = false;
-  compress(['-g', 'cpu'], []);
-}
-if (!keepPly) rmSync(cleanedPly);
+const { floatersDone, cleanedPly } = compressSplat(splat, out, { floaters, keepPly });
 
 const r = stats.removed;
 console.log(`
