@@ -5,9 +5,12 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HSE Site Induction</title>
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <div id="app"></div>
+    <canvas id="app"></canvas>
+    <div id="loading" class="overlay"><div><div id="loading-text">Loading site…</div><div class="bar"><div id="loading-bar"></div></div></div></div>
+    <div id="error" class="overlay" hidden><div><p id="error-text"></p><button id="error-retry" hidden>Retry</button></div></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
