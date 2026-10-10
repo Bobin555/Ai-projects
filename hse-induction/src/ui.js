@@ -27,3 +27,13 @@ export function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { box.hidden = true; }, 1500);
 }
+
+export function showCard(hotspot) {
+  el('card-title').textContent = hotspot.title;
+  el('card-points').replaceChildren(...hotspot.points.map((p) => Object.assign(document.createElement('li'), { textContent: p })));
+  el('card').hidden = false;
+}
+
+export function hideCard() {
+  el('card').hidden = true;
+}
