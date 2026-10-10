@@ -1,5 +1,6 @@
 const MAX_DT = 0.05;
 const EPS = 1e-6;
+const STEP_UP = 0.3; // lips, kerbs and uneven floor boxes up to 30 cm are walked over
 
 // The player is an upright box: half-width `radius` on x/z, feet at pos[1], top at pos[1] + height.
 function overlaps(pos, box, radius, height) {
@@ -28,6 +29,12 @@ export function moveWithCollision(pos, vel, dt, boxes, radius = 0.3, height = 1.
       if (axis === 1) {
         if (d < 0) { p[1] = centre + half; grounded = true; } else p[1] = centre - half - height;
       } else {
+        const top = box.position[1] + box.size[1] / 2;
+        const stepped = [p[0], top, p[2]];
+        if (top - p[1] <= STEP_UP && !boxes.some((b) => overlaps(stepped, b, radius, height))) {
+          p[1] = top;
+          continue;
+        }
         p[axis] = d > 0 ? centre - half - radius : centre + half + radius;
       }
       v[axis] = 0;
