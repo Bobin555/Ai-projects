@@ -33,6 +33,11 @@ const mb = (bytes) => `${(bytes / 1e6).toFixed(0)} MB`;
 const fmt = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n.toLocaleString());
 const round = (a, d = 2) => a.map((v) => +v.toFixed(d));
 const t0 = Date.now();
+{
+  let st;
+  try { st = statSync(input); } catch { console.error(`File not found: ${input}\nTip: drag the .ply file from Finder into Terminal to paste its exact path.`); process.exit(1); }
+  if (!st.isFile()) { console.error(`That's a folder, not a .ply file: ${input}\nTip: drag the .ply file itself from Finder into Terminal.`); process.exit(1); }
+}
 
 console.log(`Reading ${input} (${mb(statSync(input).size)})…`);
 const { splat, stats } = cleanSplat(parsePly(readFileSync(input)), { box });
