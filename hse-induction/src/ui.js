@@ -18,3 +18,12 @@ export function showError(message, { retry } = {}) {
   btn.onclick = retry ? () => { el('error').hidden = true; retry(); } : null;
   el('error').hidden = false;
 }
+
+let toastTimer;
+export function toast(message) {
+  const box = el('toast');
+  box.textContent = message;
+  box.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { box.hidden = true; }, 1500);
+}
