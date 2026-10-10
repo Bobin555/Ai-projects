@@ -16,6 +16,7 @@ const takeFlag = (name) => args.includes(name) && args.splice(args.indexOf(name)
 const flip = takeFlag('--flip');
 const floaters = takeFlag('--floaters');
 const keepHotspots = takeFlag('--keep-hotspots');
+const diagnose = takeFlag('--diagnose');
 const upArg = flag('--up');
 const up = /^[123]$/.test(upArg ?? '') ? Number(upArg) : upArg;
 const boxArg = flag('--box');
@@ -60,6 +61,7 @@ console.log('Building walls and floor…');
 const grid = buildColliders(Float32Array.from(solid));
 if (!grid.floorCells.size) fail("Couldn't find a floor. Try --up/--flip, or level the scan in SuperSplat first.");
 const start = pickStart(grid);
+if (diagnose || !start) printDiagnosis(Float32Array.from(solid), grid);
 const candidateList = () => level.candidates
   .map((c, i) => `      --up ${i + 1}: [${round(c.direction).join(', ')}] ${Math.round(c.share * 100)}% of flat surfaces${i === 0 && !up ? ' (used this time)' : ''}`)
   .join('\n');
@@ -122,4 +124,32 @@ if (level.roomHeight < 2 || level.roomHeight > 5) {
   console.log(`
   ⚠ The room measures ${level.roomHeight.toFixed(1)} m floor to ceiling. If that's wrong, the scan isn't in metres
     (nerfstudio often shrinks scenes): rescale it in SuperSplat, then rerun.`);
+}
+
+// What the tool "sees": where splats sit in height, and how much of the floor plan is open vs solid.
+function printDiagnosis(pts, g) {
+  const bins = new Map();
+  for (let n = 1; n < pts.length; n += 3) {
+    const b = Math.floor(pts[n] / 0.25);
+    if (b >= -4 && b < 24) bins.set(b, (bins.get(b) ?? 0) + 1);
+  }
+  const max = Math.max(...bins.values());
+  console.log('\n  Diagnosis — splats by height above the detected floor (each row 25 cm):');
+  for (let b = 23; b >= -4; b--) {
+    const c = bins.get(b) ?? 0;
+    console.log(`    ${(b * 0.25).toFixed(2).padStart(5)} m ${'#'.repeat(Math.round((c / max) * 40)).padEnd(40)} ${c}`);
+  }
+  const band = new Map();
+  for (let n = 0; n < pts.length; n += 3) {
+    const y = pts[n + 1];
+    if (y < 0.3 || y > 1.8) continue;
+    const k = `${Math.floor(pts[n] / g.cell)},${Math.floor(pts[n + 2] / g.cell)}`;
+    band.set(k, (band.get(k) ?? 0) + 1);
+  }
+  const counts = [...band.values()].sort((a, b) => a - b);
+  const pct = (p) => counts[Math.floor(p * (counts.length - 1))] ?? 0;
+  const free = [...g.floorCells].filter((c) => !g.solidCells.has(c)).length;
+  console.log(`
+  Grid ${g.cell.toFixed(2)} m · floor cells ${g.floorCells.size} · solid cells ${g.solidCells.size} · open floor cells ${free}
+  Splats per cell at body height (0.3–1.8 m): median ${pct(0.5)}, 90% ${pct(0.9)}, 99% ${pct(0.99)} (solid threshold ${Math.round(8 * g.cell / 0.25)})`);
 }
