@@ -44,7 +44,7 @@ export async function enableSetup({ app, site, player, rings }) {
   async function save() {
     // Keep file order so the checklist matches hotspots.md.
     const hotspots = items.flatMap((it) => placed.filter((p) => p.id === it.id));
-    const body = JSON.stringify({ ...site, hotspots });
+    const body = JSON.stringify({ hotspots });
     const res = await fetch('__save-site', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
     message = res.ok ? 'Saved' : `Not saved: ${await res.text()}`;
     if (res.ok) site.hotspots = hotspots;

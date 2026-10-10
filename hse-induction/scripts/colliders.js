@@ -5,6 +5,7 @@ const SOLID_BAND = [0.3, 1.8];    // body height: anything here blocks walking
 const WALL_HEIGHT = 2.5;
 const FLOOR_THICKNESS = 0.2;
 const CLEARANCE = 0.6;            // start point keeps this far from walls and floor edges
+const INSET = 0.1;                // wall boxes shrink this much per side so doorways that straddle grid cells stay walkable
 
 const key = (i, k) => `${i},${k}`;
 const unkey = (s) => s.split(',').map(Number);
@@ -39,8 +40,11 @@ function mergeCells(cells) {
   return rects;
 }
 
-function rectToBox({ i0, i1, k0, k1 }, cell, y0, y1) {
-  const [xa, xb, za, zb] = [i0 * cell, (i1 + 1) * cell, k0 * cell, (k1 + 1) * cell];
+function rectToBox({ i0, i1, k0, k1 }, cell, y0, y1, inset = 0) {
+  let [xa, xb, za, zb] = [i0 * cell, (i1 + 1) * cell, k0 * cell, (k1 + 1) * cell];
+  const shrink = (a, b) => { const d = Math.min(inset, (b - a - 0.05) / 2); return d > 0 ? [a + d, b - d] : [a, b]; };
+  [xa, xb] = shrink(xa, xb);
+  [za, zb] = shrink(za, zb);
   return { position: [(xa + xb) / 2, (y0 + y1) / 2, (za + zb) / 2], size: [xb - xa, y1 - y0, zb - za] };
 }
 
@@ -56,17 +60,18 @@ function build(positions, cell, minSolid) {
   const solidCells = new Set([...solidCount].filter(([, n]) => n >= minSolid).map(([c]) => c));
   const colliders = [
     ...mergeCells(floorCells).map((r) => rectToBox(r, cell, -FLOOR_THICKNESS, 0)),
-    ...mergeCells(solidCells).map((r) => rectToBox(r, cell, 0, WALL_HEIGHT)),
+    ...mergeCells(solidCells).map((r) => rectToBox(r, cell, 0, WALL_HEIGHT, INSET)),
   ];
   return { colliders, floorCells, solidCells, cell };
 }
 
 export function buildColliders(positions, { cell = 0.25, minSolid = 8, maxBoxes = 400 } = {}) {
   let result = build(positions, cell, minSolid);
-  // Coarser grid until the box count fits; minSolid scales with cell area so density stays comparable.
+  // Coarser grid until the box count fits. Walls are lines in plan, so their splats per cell grow with the
+  // cell's edge length, not its area: scale minSolid linearly so thin walls don't drop out.
   while (result.colliders.length > maxBoxes && result.cell < 5) {
     const next = result.cell * 1.5;
-    result = build(positions, next, Math.round(minSolid * (next / cell) ** 2));
+    result = build(positions, next, Math.round(minSolid * (next / cell)));
   }
   return result;
 }

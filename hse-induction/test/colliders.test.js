@@ -7,7 +7,9 @@ const { splat, kinds } = makeRoom({ doorway: true, step: 0.1 });
 const positions = new Float32Array(splat.count * 3);
 for (let n = 0; n < splat.count; n++) positions.set(splat.data.subarray(n * splat.props.length, n * splat.props.length + 3), n * 3);
 
-const inside = (p, b) => [0, 1, 2].every((k) => Math.abs(p[k] - b.position[k]) <= b.size[k] / 2 + 1e-6);
+const inside = (p, b, tol = 1e-6) => [0, 1, 2].every((k) => Math.abs(p[k] - b.position[k]) <= b.size[k] / 2 + tol);
+// Wall boxes are inset 0.1 m so doorways stay open; points at a box's very edge may sit just outside.
+const nearAny = (p, boxes) => boxes.some((b) => inside(p, b, 0.11));
 const inAny = (p, boxes) => boxes.some((b) => inside(p, b));
 const result = buildColliders(positions);
 const { colliders } = result;
@@ -16,7 +18,7 @@ describe('buildColliders', () => {
   it('covers every wall point at body height', () => {
     const missed = kinds.flatMap((k, n) => {
       const p = [positions[n * 3], positions[n * 3 + 1], positions[n * 3 + 2]];
-      return k === 'wall' && p[1] >= 0.3 && p[1] <= 1.8 && !inAny(p, colliders) ? [p] : [];
+      return k === 'wall' && p[1] >= 0.3 && p[1] <= 1.8 && !nearAny(p, colliders) ? [p] : [];
     });
     expect(missed).toEqual([]);
   });
@@ -64,5 +66,31 @@ describe('pickStart', () => {
   });
   it('faces a direction', () => {
     expect(Number.isFinite(start.yaw)).toBe(true);
+  });
+});
+
+describe('doorways that do not line up with the grid', () => {
+  // A wall at z = -3 along x in [-4, 4], with an 0.85 m gap centred at various offsets.
+  const wallWithGap = (centre, width = 0.85) => {
+    const pts = [];
+    for (let x = -4; x <= 4; x += 0.05) for (let y = 0; y <= 2.5; y += 0.1) for (let z = -5; z <= 5; z += 0.25) {
+      if (y === 0) pts.push(x, 0, z); // floor
+    }
+    for (let x = -4; x <= 4; x += 0.02) {
+      if (Math.abs(x - centre) < width / 2) continue;
+      for (let y = 0.3; y <= 1.8; y += 0.05) pts.push(x, y, -3);
+    }
+    return Float32Array.from(pts);
+  };
+  for (const offset of [0, 0.05, 0.12, 0.2]) {
+    it(`lets the player through an 0.85 m doorway at offset ${offset}`, () => {
+      const { colliders } = buildColliders(wallWithGap(offset));
+      expect(overlapIndex([offset, 0, -3], colliders)).toBe(-1);
+      expect(overlapIndex([offset + 1, 0, -3], colliders)).toBeGreaterThanOrEqual(0); // the wall itself still blocks
+    });
+  }
+  it('keeps walls solid after growing the grid', () => {
+    const small = buildColliders(positions, { maxBoxes: 6 });
+    expect(overlapIndex([2, 0, -5], small.colliders)).toBeGreaterThanOrEqual(0);
   });
 });

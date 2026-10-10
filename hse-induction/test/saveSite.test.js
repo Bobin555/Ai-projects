@@ -23,3 +23,19 @@ describe('checkSave', () => {
     expect(r.error).toContain('hotspots[0].points');
   });
 });
+
+describe('checkSave with the file on disk', () => {
+  const onDisk = JSON.parse(sample);
+  it('only takes hotspots from the request; everything else comes from the file', () => {
+    const body = JSON.stringify({ hotspots: [], splatUrl: 'evil.sog', colliders: [] });
+    const r = checkSave(body, onDisk);
+    expect(r.ok).toBe(true);
+    const saved = JSON.parse(r.json);
+    expect(saved.splatUrl).toBe(onDisk.splatUrl);
+    expect(saved.colliders).toEqual(onDisk.colliders);
+    expect(saved.hotspots).toEqual([]);
+  });
+  it('refuses a body without a hotspots list', () => {
+    expect(checkSave(JSON.stringify({ splatUrl: 'x' }), onDisk).ok).toBe(false);
+  });
+});

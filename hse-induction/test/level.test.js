@@ -64,3 +64,28 @@ describe('levelSplat', () => {
     expect(v.z).toBeCloseTo(r.positions[2], 3);
   });
 });
+
+describe('levelSplat: ambiguity and size', () => {
+  // A 2 m wide, 20 m long, 2.7 m high corridor: its two long walls have more flat area than floor + ceiling.
+  it('reports the room height', () => {
+    const { splat } = makeRoom();
+    expect(levelSplat(splat).roomHeight).toBeCloseTo(3, 0);
+  });
+  it('lists candidate up directions, biggest first, and flags a close call', async () => {
+    const { makeCorridor } = await import('./helpers/fakeRoom.js');
+    const { splat, kinds } = makeCorridor({ rotation: [90, 0, 0] });
+    const r = levelSplat(splat);
+    expect(r.candidates.length).toBeGreaterThanOrEqual(2);
+    expect(r.candidates[0].share).toBeGreaterThanOrEqual(r.candidates[1].share);
+    expect(r.ambiguous).toBe(true);
+    // Picking the floor/ceiling candidate by number levels it properly.
+    const pick = r.candidates.findIndex((c) => Math.abs(c.direction[2]) > 0.9) + 1;
+    const fixed = levelSplat(splat, { up: pick });
+    const floorYs = kinds.flatMap((k, n) => (k === 'floor' ? [fixed.positions[n * 3 + 1]] : []));
+    expect(Math.max(...floorYs.map(Math.abs))).toBeLessThan(0.05);
+  });
+  it('is not ambiguous for an ordinary room', () => {
+    const { splat } = makeRoom({ rotation: [90, 0, 0] });
+    expect(levelSplat(splat).ambiguous).toBe(false);
+  });
+});

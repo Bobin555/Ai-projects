@@ -42,3 +42,24 @@ export function stripProps(splat, keep) {
   for (let n = 0; n < splat.count; n++) idx.forEach((k, j) => { data[n * keep.length + j] = splat.data[n * splat.props.length + k]; });
   return { props: keep, count: splat.count, data };
 }
+
+// 2 x 20 x 2.7 m corridor (long axis along z), same conventions as makeRoom.
+export function makeCorridor({ rotation = [0, 0, 0], step = 0.1 } = {}) {
+  const rows = [];
+  const flat = (kind, p, thin) => {
+    const s = [Math.log(0.05), Math.log(0.05), Math.log(0.05)];
+    s[thin] = Math.log(0.003);
+    rows.push({ kind, p, s });
+  };
+  const span = (a, b) => { const out = []; for (let v = a; v <= b + 1e-9; v += step) out.push(+v.toFixed(4)); return out; };
+  span(-1, 1).forEach((x) => span(-10, 10).forEach((z) => { flat('floor', [x, 0, z], 1); flat('ceiling', [x, 2.7, z], 1); }));
+  span(-10, 10).forEach((z) => span(0, 2.7).forEach((y) => { flat('wall', [-1, y, z], 0); flat('wall', [1, y, z], 0); }));
+  const q = new pc.Quat().setFromEulerAngles(...rotation);
+  const data = new Float32Array(rows.length * PROPS.length);
+  const v = new pc.Vec3();
+  rows.forEach((r, n) => {
+    q.transformVector(v.set(...r.p), v);
+    data.set([v.x, v.y, v.z, 3, ...r.s, q.w, q.x, q.y, q.z], n * PROPS.length);
+  });
+  return { splat: { props: PROPS, count: rows.length, data }, kinds: rows.map((r) => r.kind) };
+}

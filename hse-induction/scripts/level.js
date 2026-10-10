@@ -50,14 +50,17 @@ function dominantNormal(flats) {
     best.c.weight += f.area;
   }
   const total = clusters.reduce((s, c) => s + c.weight, 0);
-  const top = clusters.reduce((a, b) => (b.weight > a.weight ? b : a), clusters[0]);
-  return top ? { up: norm(top.sum), confidence: top.weight / total } : null;
+  return clusters
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 3)
+    .map((c) => ({ direction: norm(c.sum), share: c.weight / total }));
 }
 
 function percentile(sorted, p) {
   return sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor(p * (sorted.length - 1))))];
 }
 
+// up: 'x' | 'y' | 'z' forces a scan axis; a number (1-3) picks that candidate from a previous run's report.
 export function levelSplat(splat, { up: upAxis, flip = false } = {}) {
   const { props, count, data } = splat;
   const stride = props.length;
@@ -65,15 +68,22 @@ export function levelSplat(splat, { up: upAxis, flip = false } = {}) {
   const pos = (n) => [data[n * stride + xi], data[n * stride + yi], data[n * stride + zi]];
 
   const flats = flatSplats(splat);
+  const candidates = flats?.length ? dominantNormal(flats) : [];
+  const forcedAxis = typeof upAxis === 'string';
   let up;
   let confidence = 0;
-  if (upAxis) {
+  if (forcedAxis) {
     up = AXES[upAxis];
+  } else if (typeof upAxis === 'number') {
+    if (!candidates[upAxis - 1]) throw new Error(`There is no up candidate ${upAxis} (found ${candidates.length})`);
+    up = candidates[upAxis - 1].direction;
+    confidence = candidates[upAxis - 1].share;
   } else {
-    const found = flats?.length ? dominantNormal(flats) : null;
-    up = found ? found.up : AXES.y;
-    confidence = found ? found.confidence : 0;
+    up = candidates[0]?.direction ?? AXES.y;
+    confidence = candidates[0]?.share ?? 0;
   }
+  // Close call: the runner-up has nearly as much flat area (e.g. a corridor's long walls vs its floor).
+  const ambiguous = candidates.length > 1 && candidates[1].share >= 0.6 * candidates[0].share;
 
   // Heights along up. The floor is the end with more splats in its first BAND metres.
   const heights = new Float64Array(count);
@@ -84,7 +94,7 @@ export function levelSplat(splat, { up: upAxis, flip = false } = {}) {
   let nearLo = 0;
   let nearHi = 0;
   for (const h of heights) { if (h >= lo && h <= lo + BAND) nearLo++; if (h <= hi && h >= hi - BAND) nearHi++; }
-  if (!upAxis && nearHi > nearLo) up = up.map((v) => -v);
+  if (!forcedAxis && nearHi > nearLo) up = up.map((v) => -v);
   if (flip) up = up.map((v) => -v);
   for (let n = 0; n < count; n++) heights[n] = dot(pos(n), up);
   const sorted2 = Float64Array.from(heights).sort();
@@ -103,7 +113,7 @@ export function levelSplat(splat, { up: upAxis, flip = false } = {}) {
     bins.set(b, (bins.get(b) ?? 0) + 1);
   }
   if (bins.size) floorH = [...bins.entries()].reduce((a, b) => (b[1] > a[1] ? b : a))[0] * 0.05;
-  if (!flats) {
+  if (!flats?.length) {
     // No orientation data: the floor is the densest 5 cm layer in the lowest third.
     const layer = new Map();
     for (const h of heights) if (h <= third) { const b = Math.round(h / 0.05); layer.set(b, (layer.get(b) ?? 0) + 1); }
@@ -132,6 +142,9 @@ export function levelSplat(splat, { up: upAxis, flip = false } = {}) {
   const cz = nFloor ? sz / nFloor : 0;
   for (let n = 0; n < count; n++) { positions[n * 3] -= cx; positions[n * 3 + 2] -= cz; }
 
+  const levelledY = Float64Array.from({ length: count }, (_, n) => positions[n * 3 + 1]).sort();
+  const roomHeight = percentile(levelledY, 0.99);
+
   const e = q.getEulerAngles();
-  return { rotation: [e.x, e.y, e.z], position: [-cx, -floorH, -cz], positions, confidence, upAxisScan: up };
+  return { rotation: [e.x, e.y, e.z], position: [-cx, -floorH, -cz], positions, confidence, upAxisScan: up, candidates, ambiguous, roomHeight };
 }
