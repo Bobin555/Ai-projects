@@ -12,3 +12,9 @@ export function hotspotsInside(pos, hotspots) {
 export function newlyEntered(prevIds, nowIds) {
   return [...nowIds].filter((id) => !prevIds.has(id));
 }
+
+// inside is nearest-first (from hotspotsInside); prevId is the nearest id last frame, or null.
+export function nearestChange(prevId, inside) {
+  const nearest = inside[0] ?? null;
+  return { changed: (nearest?.id ?? null) !== prevId, nearest };
+}

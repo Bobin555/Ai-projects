@@ -50,8 +50,8 @@ export function renderChecklist(found, total, items) {
   el('checklist').hidden = false;
 }
 
-export function showDone() {
+export function showDone(onClose) {
   document.exitPointerLock?.();
   el('done').hidden = false;
-  el('done-close').onclick = () => { el('done').hidden = true; };
+  el('done-close').onclick = () => { el('done').hidden = true; onClose?.(); };
 }

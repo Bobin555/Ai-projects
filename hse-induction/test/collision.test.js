@@ -8,7 +8,6 @@ describe('moveWithCollision', () => {
   it('stays on the floor when standing still', () => {
     const r = moveWithCollision([0, 0, 0], [0, 0, 0], 0.016, [floor]);
     expect(r.pos[1]).toBeCloseTo(0);
-    expect(r.grounded).toBe(true);
   });
 
   it('stops at a wall and keeps sliding along it', () => {
@@ -27,7 +26,6 @@ describe('moveWithCollision', () => {
     }
     expect(s.pos[1]).toBeCloseTo(0);
     expect(s.vel[1]).toBe(0);
-    expect(s.grounded).toBe(true);
   });
 
   it('clamps a huge dt so the player cannot tunnel through a thin wall', () => {
@@ -39,7 +37,6 @@ describe('moveWithCollision', () => {
   it('just integrates velocity when there are no boxes', () => {
     const r = moveWithCollision([0, 0, 0], [1, 2, 3], 0.01, []);
     expect(r.pos).toEqual([0.01, 0.02, 0.03]);
-    expect(r.grounded).toBe(false);
   });
 });
 

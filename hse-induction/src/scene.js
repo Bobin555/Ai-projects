@@ -30,7 +30,7 @@ export function createScene(canvas, site, onProgress = () => {}) {
       app.start();
       resolve({ app, camera, colliders: site.colliders });
     });
-    asset.once("error", (err) => { setTimeout(() => app.destroy()); reject(Object.assign(new Error('Could not load the site scan.'), { detail: String(err) })); });
+    asset.once("error", (err) => { setTimeout(() => app.destroy()); reject(Object.assign(new Error(`Could not load the site scan (${site.splatUrl}).`), { detail: String(err) })); });
     app.assets.add(asset);
     app.assets.load(asset);
   });

@@ -1,4 +1,4 @@
-const MAX_DT = 0.05;
+export const MAX_DT = 0.05;
 const EPS = 1e-6;
 const STEP_UP = 0.3; // lips, kerbs and uneven floor boxes up to 30 cm are walked over
 
@@ -11,11 +11,15 @@ function overlaps(pos, box, radius, height) {
     && pos[2] + radius > bz - hz + EPS && pos[2] - radius < bz + hz - EPS;
 }
 
+// Index of the first box the player would overlap at pos, or -1.
+export function overlapIndex(pos, boxes, radius = 0.3, height = 1.7) {
+  return boxes.findIndex((b) => overlaps(pos, b, radius, height));
+}
+
 export function moveWithCollision(pos, vel, dt, boxes, radius = 0.3, height = 1.7) {
   const step = Math.min(dt, MAX_DT);
   const p = [...pos];
   const v = [...vel];
-  let grounded = false;
 
   // Resolve one axis at a time so the player slides along walls.
   for (const axis of [0, 1, 2]) {
@@ -27,7 +31,7 @@ export function moveWithCollision(pos, vel, dt, boxes, radius = 0.3, height = 1.
       const centre = box.position[axis];
       const half = box.size[axis] / 2;
       if (axis === 1) {
-        if (d < 0) { p[1] = centre + half; grounded = true; } else p[1] = centre - half - height;
+        p[1] = d < 0 ? centre + half : centre - half - height;
       } else {
         const top = box.position[1] + box.size[1] / 2;
         const stepped = [p[0], top, p[2]];
@@ -41,9 +45,5 @@ export function moveWithCollision(pos, vel, dt, boxes, radius = 0.3, height = 1.
     }
   }
 
-  // Standing still on a surface still counts as grounded.
-  if (!grounded && v[1] === 0) {
-    grounded = boxes.some((b) => overlaps([p[0], p[1] - 0.01, p[2]], b, radius, height));
-  }
-  return { pos: p, vel: v, grounded };
+  return { pos: p, vel: v };
 }

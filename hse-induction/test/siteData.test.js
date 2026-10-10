@@ -35,3 +35,25 @@ describe('validateSite', () => {
     expect(validateSite({}).length).toBeGreaterThan(1);
   });
 });
+
+describe('start position', () => {
+  it('rejects a start position inside a collider', () => {
+    expect(errorsFor(d => { d.colliders.push({ position: [0, 1, 0], size: [2, 2, 2] }); })).toContain('start.position: inside colliders[1]');
+  });
+  it('accepts feet resting exactly on a floor top', () => {
+    expect(validateSite(sample())).toEqual([]);
+  });
+});
+
+describe('loadSite', () => {
+  it('reports broken JSON as invalid site data', async () => {
+    const { loadSite } = await import('../src/siteData.js');
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response('{ "splatUrl": ', { status: 200 });
+    try {
+      await expect(loadSite()).rejects.toMatchObject({ invalidSite: true });
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
+});

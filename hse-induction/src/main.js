@@ -27,13 +27,15 @@ async function startScene(site) {
   refresh();
   createHotspots(scene.app, site.hotspots, player.getPosition, {
     onEnter: (entered) => {
-      showCard(entered[0]);
       const wasComplete = checklist.isComplete();
       entered.forEach((h) => checklist.markFound(h.id));
       refresh();
-      if (!wasComplete && checklist.isComplete()) showDone();
+      if (!wasComplete && checklist.isComplete()) {
+        player.setPaused(true);
+        showDone(() => player.setPaused(false));
+      }
     },
-    onLeaveAll: hideCard,
+    onNearestChange: (nearest) => (nearest ? showCard(nearest) : hideCard()),
   });
   scene.app.keyboard.on(pc.EVENT_KEYDOWN, (e) => { if (e.key === pc.KEY_E) hideCard(); });
   if (debug) enableDebug(scene.app, scene.colliders, player);

@@ -1,3 +1,5 @@
+import { overlapIndex } from './collision.js';
+
 const isVec3 = (v) => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
 
 export function validateSite(data) {
@@ -13,6 +15,11 @@ export function validateSite(data) {
     if (!isVec3(c?.position)) errors.push(`colliders[${i}].position: needs 3 numbers`);
     if (!isVec3(c?.size) || c.size.some((n) => n <= 0)) errors.push(`colliders[${i}].size: needs 3 numbers above 0`);
   });
+
+  if (isVec3(d.start?.position) && Array.isArray(d.colliders) && !errors.some((e) => e.startsWith('colliders'))) {
+    const hit = overlapIndex(d.start.position, d.colliders);
+    if (hit >= 0) errors.push(`start.position: inside colliders[${hit}]`);
+  }
 
   if (!Array.isArray(d.hotspots)) errors.push('hotspots: must be a list');
   else {
@@ -37,7 +44,12 @@ export function validateSite(data) {
 export async function loadSite(url = 'site.json') {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Could not load ${url} (${res.status})`);
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch (err) {
+    throw Object.assign(new Error(`${url} is not valid JSON: ${err.message}`), { invalidSite: true });
+  }
   const errors = validateSite(data);
   if (errors.length) throw Object.assign(new Error(errors.join('\n')), { invalidSite: true });
   return data;

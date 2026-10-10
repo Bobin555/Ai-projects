@@ -28,3 +28,20 @@ describe('newlyEntered', () => {
     expect(newlyEntered(new Set(), new Set(['a']))).toEqual(['a']);
   });
 });
+
+import { nearestChange } from '../src/hotspotLogic.js';
+
+describe('nearestChange', () => {
+  it('reports the nearest ring overall, not just the one entered last', () => {
+    expect(nearestChange('b', [a, b])).toEqual({ changed: true, nearest: a });
+  });
+  it('reports no change while the nearest ring stays the same', () => {
+    expect(nearestChange('a', [a, b])).toEqual({ changed: false, nearest: a });
+  });
+  it('falls back to the remaining ring after leaving the nearer one', () => {
+    expect(nearestChange('a', [b])).toEqual({ changed: true, nearest: b });
+  });
+  it('reports null after leaving every ring', () => {
+    expect(nearestChange('a', [])).toEqual({ changed: true, nearest: null });
+  });
+});

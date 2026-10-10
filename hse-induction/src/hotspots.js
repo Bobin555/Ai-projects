@@ -1,8 +1,8 @@
 import * as pc from 'playcanvas';
-import { hotspotsInside, newlyEntered } from './hotspotLogic.js';
+import { hotspotsInside, newlyEntered, nearestChange } from './hotspotLogic.js';
 
-// onEnter(hotspots[]) gets the rings just entered this frame, nearest first; onLeaveAll() fires when the player is in no ring.
-export function createHotspots(app, hotspots, getPlayerPos, { onEnter, onLeaveAll }) {
+// onEnter(hotspots[]) gets the rings just entered this frame; onNearestChange(hotspot|null) fires when the nearest ring the player stands in changes.
+export function createHotspots(app, hotspots, getPlayerPos, { onEnter, onNearestChange }) {
   const mat = new pc.StandardMaterial();
   mat.diffuse = new pc.Color(0, 0, 0);
   mat.emissive = new pc.Color(1, 0.7, 0);
@@ -17,6 +17,7 @@ export function createHotspots(app, hotspots, getPlayerPos, { onEnter, onLeaveAl
   }
 
   let prev = new Set();
+  let prevNearest = null;
   let t = 0;
   app.on('update', (dt) => {
     t += dt;
@@ -28,7 +29,9 @@ export function createHotspots(app, hotspots, getPlayerPos, { onEnter, onLeaveAl
     const entered = new Set(newlyEntered(prev, now));
     const justEntered = inside.filter((h) => entered.has(h.id));
     if (justEntered.length) onEnter(justEntered);
-    if (now.size === 0 && prev.size > 0) onLeaveAll();
+    const { changed, nearest } = nearestChange(prevNearest, inside);
+    if (changed) onNearestChange(nearest);
+    prevNearest = nearest?.id ?? null;
     prev = now;
   });
 }

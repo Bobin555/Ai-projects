@@ -1,5 +1,5 @@
 import * as pc from 'playcanvas';
-import { moveWithCollision } from './collision.js';
+import { moveWithCollision, MAX_DT } from './collision.js';
 
 const WALK = 1.4;
 const RUN = 3;
@@ -14,11 +14,12 @@ export function createPlayer(app, camera, site, colliders) {
   let vel = [0, 0, 0];
   let yaw = start.yaw ?? 0;
   let pitch = 0;
+  let paused = false;
   const kb = app.keyboard;
   const canvas = app.graphicsDevice.canvas;
 
   canvas.addEventListener('click', () => {
-    if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.();
+    if (document.pointerLockElement !== canvas) canvas.requestPointerLock?.()?.catch?.(() => {}); // Chrome refuses a re-lock right after Esc
   });
   app.mouse.on(pc.EVENT_MOUSEMOVE, (e) => {
     if (document.pointerLockElement !== canvas) return;
@@ -40,9 +41,9 @@ export function createPlayer(app, camera, site, colliders) {
     let mx = -Math.sin(r) * fwd + Math.cos(r) * side;
     let mz = -Math.cos(r) * fwd - Math.sin(r) * side;
     const len = Math.hypot(mx, mz);
-    if (len > 0) { mx = (mx / len) * speed; mz = (mz / len) * speed; }
+    if (len > 0 && !paused) { mx = (mx / len) * speed; mz = (mz / len) * speed; } else { mx = 0; mz = 0; }
 
-    vel = [mx, vel[1] + GRAVITY * Math.min(dt, 0.05), mz];
+    vel = [mx, vel[1] + GRAVITY * Math.min(dt, MAX_DT), mz];
     const res = moveWithCollision(pos, vel, dt, colliders);
     pos = res.pos;
     vel = res.vel;
@@ -53,5 +54,5 @@ export function createPlayer(app, camera, site, colliders) {
   }
 
   app.on('update', update);
-  return { update, getPosition: () => [...pos], resetToStart };
+  return { update, getPosition: () => [...pos], resetToStart, setPaused: (p) => { paused = p; } };
 }
