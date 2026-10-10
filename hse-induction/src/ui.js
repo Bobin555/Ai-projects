@@ -37,3 +37,21 @@ export function showCard(hotspot) {
 export function hideCard() {
   el('card').hidden = true;
 }
+
+// items: [{ title, found }]
+export function renderChecklist(found, total, items) {
+  el('checklist-count').textContent = `${found} of ${total} found`;
+  el('checklist-items').replaceChildren(...items.map((it) => {
+    const li = document.createElement('li');
+    li.textContent = it.title;
+    li.className = it.found ? 'found' : '';
+    return li;
+  }));
+  el('checklist').hidden = false;
+}
+
+export function showDone() {
+  document.exitPointerLock?.();
+  el('done').hidden = false;
+  el('done-close').onclick = () => { el('done').hidden = true; };
+}
