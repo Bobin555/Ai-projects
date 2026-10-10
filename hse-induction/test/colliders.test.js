@@ -94,3 +94,30 @@ describe('doorways that do not line up with the grid', () => {
     expect(overlapIndex([2, 0, -5], small.colliders)).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('real scans with floating specks at body height', () => {
+  // Modelled on a real reception scan's diagnosis: about 11 specks per 0.25 m cell at body height (above the old
+  // fixed threshold of 8) and wall cells with 100+ splats.
+  const dense = makeRoom({ doorway: true, step: 0.05 }).splat;
+  const base = [];
+  for (let n = 0; n < dense.count; n++) base.push(...dense.data.subarray(n * dense.props.length, n * dense.props.length + 3));
+  const specks = [];
+  let seed = 1;
+  const rand = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  for (let i = 0; i < 1600 * 11; i++) specks.push(rand() * 10 - 5, 0.3 + rand() * 1.5, rand() * 10 - 5);
+  const noisy = Float32Array.from([...base, ...specks]);
+  const r = buildColliders(noisy);
+
+  it('still finds open floor to start on', () => {
+    const start = pickStart(r);
+    expect(start).not.toBeNull();
+    expect(overlapIndex(start.position, r.colliders)).toBe(-1);
+  });
+  it('keeps real walls solid', () => {
+    expect(overlapIndex([2, 0, -5], r.colliders)).toBeGreaterThanOrEqual(0);
+    expect(overlapIndex([-5, 0, 2], r.colliders)).toBeGreaterThanOrEqual(0);
+  });
+  it('does not turn most of the floor into walls', () => {
+    expect(r.solidCells.size).toBeLessThan(r.floorCells.size * 0.3);
+  });
+});

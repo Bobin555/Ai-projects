@@ -5,6 +5,7 @@ const SOLID_BAND = [0.3, 1.8];    // body height: anything here blocks walking
 const WALL_HEIGHT = 2.5;
 const FLOOR_THICKNESS = 0.2;
 const CLEARANCE = 0.6;            // start point keeps this far from walls and floor edges
+const SPECK_FACTOR = 3;          // a solid cell has at least this many times the background speck count
 const INSET = 0.1;                // wall boxes shrink this much per side so doorways that straddle grid cells stay walkable
 
 const key = (i, k) => `${i},${k}`;
@@ -57,12 +58,16 @@ function build(positions, cell, minSolid) {
     if (Math.abs(y) <= FLOOR_BAND) floorCells.add(c);
     if (y >= SOLID_BAND[0] && y <= SOLID_BAND[1]) solidCount.set(c, (solidCount.get(c) ?? 0) + 1);
   }
-  const solidCells = new Set([...solidCount].filter(([, n]) => n >= minSolid).map(([c]) => c));
+  // Real scans have floating specks everywhere at body height. Measure that background over the floor plan
+  // (cells with no specks count as 0) and only call a cell solid if it is well above it: walls are dense, specks aren't.
+  const background = [...floorCells].map((c) => solidCount.get(c) ?? 0).sort((a, b) => a - b)[Math.floor(floorCells.size / 2)] ?? 0;
+  const threshold = Math.max(minSolid, SPECK_FACTOR * background);
+  const solidCells = new Set([...solidCount].filter(([, n]) => n >= threshold).map(([c]) => c));
   const colliders = [
     ...mergeCells(floorCells).map((r) => rectToBox(r, cell, -FLOOR_THICKNESS, 0)),
     ...mergeCells(solidCells).map((r) => rectToBox(r, cell, 0, WALL_HEIGHT, INSET)),
   ];
-  return { colliders, floorCells, solidCells, cell };
+  return { colliders, floorCells, solidCells, cell, threshold };
 }
 
 export function buildColliders(positions, { cell = 0.25, minSolid = 8, maxBoxes = 400 } = {}) {

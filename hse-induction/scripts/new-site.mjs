@@ -151,5 +151,5 @@ function printDiagnosis(pts, g) {
   const free = [...g.floorCells].filter((c) => !g.solidCells.has(c)).length;
   console.log(`
   Grid ${g.cell.toFixed(2)} m · floor cells ${g.floorCells.size} · solid cells ${g.solidCells.size} · open floor cells ${free}
-  Splats per cell at body height (0.3–1.8 m): median ${pct(0.5)}, 90% ${pct(0.9)}, 99% ${pct(0.99)} (solid threshold ${Math.round(8 * g.cell / 0.25)})`);
+  Splats per cell at body height (0.3–1.8 m): median ${pct(0.5)}, 90% ${pct(0.9)}, 99% ${pct(0.99)} (solid threshold ${Math.round(g.threshold)})`);
 }
