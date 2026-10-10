@@ -18,11 +18,30 @@ to copy your position, then paste it into `public/site.json`.
 
 ## Prepare the splat (once per scan)
 
-1. Open the raw `.ply` in SuperSplat (https://superspl.at/editor). Crop to
-   the site, and delete floaters, sky and noise. Export a `.ply`.
-2. Compress it with SplatTransform:
-   `npx @playcanvas/splat-transform cleaned.ply local-assets/site.sog`
-3. Aim for 150 MB or less.
+One command cleans and compresses a raw scan into `local-assets/site.sog`:
+
+```
+npm run clean-splat -- ~/Downloads/site.ply
+```
+
+It removes near-invisible haze, giant blurry blobs, far-away junk and
+floaters, then compresses the result. When it finishes it prints a report:
+
+```
+Splats:  2.10M → 1.40M
+Removed: 210K faint · 12K huge blobs · 300K far-away · 180K floaters
+Size:    500 MB → 62 MB
+```
+
+Options:
+- `--box minX,minY,minZ,maxX,maxY,maxZ` keeps only what's inside your own box
+  (use `?debug` and **P** in the app to find the corners).
+- `--out path.sog` writes the result somewhere else.
+- `--keep-ply` also keeps the cleaned, uncompressed `.ply`.
+
+If something your site needs gets removed, or junk is left behind, open the
+`.ply` in SuperSplat (https://superspl.at/editor) and fix it by hand. Then
+run the command on SuperSplat's export.
 
 For a hosted build, upload `site.sog` to file hosting (e.g. Cloudflare R2)
 and set `splatUrl` in `public/site.json` to its address.
