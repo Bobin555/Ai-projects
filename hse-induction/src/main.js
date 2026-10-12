@@ -42,8 +42,8 @@ async function startScene(site) {
     onNearestChange: (nearest) => (nearest ? showCard(nearest) : hideCard()),
   });
   scene.app.keyboard.on(pc.EVENT_KEYDOWN, (e) => { if (e.key === pc.KEY_E) hideCard(); });
-  if (debug) enableDebug(scene.app, scene.colliders, player);
-  if (setup) enableSetup({ app: scene.app, site, player, rings, splat: scene.splat });
+  const boxes = debug ? enableDebug(scene.app, scene.colliders, player) : null;
+  if (setup) enableSetup({ app: scene.app, site, player, rings, splat: scene.splat, camera: scene.camera, boxes });
   const state = { ...scene, player, checklist };
   if (debug) window.__hse = state;
   return state;

@@ -37,3 +37,4 @@ button { font: inherit; padding: 8px 18px; border: 0; border-radius: 6px; backgr
 .q-next { font-weight: 600; }
 .q-skipped { opacity: 0.7; font-style: italic; }
 .setup-size span { opacity: 0.7; font-size: 0.85rem; }
+#crosshair { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 22px; text-shadow: 0 0 3px #000; pointer-events: none; z-index: 5; }

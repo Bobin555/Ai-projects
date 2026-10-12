@@ -27,7 +27,7 @@ describe('checkSave', () => {
 describe('checkSave with the file on disk', () => {
   const onDisk = JSON.parse(sample);
   it('only takes hotspots from the request; everything else comes from the file', () => {
-    const body = JSON.stringify({ hotspots: [], splatUrl: 'evil.sog', colliders: [] });
+    const body = JSON.stringify({ hotspots: [], splatUrl: 'evil.sog', splatPosition: [9, 9, 9] });
     const r = checkSave(body, onDisk);
     expect(r.ok).toBe(true);
     const saved = JSON.parse(r.json);
@@ -37,5 +37,31 @@ describe('checkSave with the file on disk', () => {
   });
   it('refuses a body without a hotspots list', () => {
     expect(checkSave(JSON.stringify({ splatUrl: 'x' }), onDisk).ok).toBe(false);
+  });
+});
+
+describe('checkSave: removing walls in setup', () => {
+  const onDisk = JSON.parse(sample);
+  onDisk.colliders = [{ position: [3, 1.25, 3], size: [1, 2.5, 1] }, ...onDisk.colliders];
+  it('accepts a colliders list that only drops boxes from the file', () => {
+    const r = checkSave(JSON.stringify({ hotspots: onDisk.hotspots, colliders: onDisk.colliders.slice(1) }), onDisk);
+    expect(r.ok).toBe(true);
+    expect(JSON.parse(r.json).colliders).toEqual(onDisk.colliders.slice(1));
+  });
+  it('remembers removed boxes so they can be put back', () => {
+    const r1 = JSON.parse(checkSave(JSON.stringify({ hotspots: [], colliders: onDisk.colliders.slice(1) }), onDisk).json);
+    expect(r1.removedColliders).toEqual([onDisk.colliders[0]]);
+    const r2 = JSON.parse(checkSave(JSON.stringify({ hotspots: [], colliders: onDisk.colliders }), r1).json);
+    expect(r2.colliders).toEqual(onDisk.colliders);
+    expect(r2.removedColliders).toBeUndefined();
+  });
+  it('refuses removing a floor box', () => {
+    expect(checkSave(JSON.stringify({ hotspots: [], colliders: [] }), onDisk).ok).toBe(false);
+  });
+  it('refuses a box that is not in the file (stale tab or a new box)', () => {
+    const extra = { position: [9, 1, 9], size: [1, 2, 1] };
+    const r = checkSave(JSON.stringify({ hotspots: [], colliders: [...onDisk.colliders, extra] }), onDisk);
+    expect(r.ok).toBe(false);
+    expect(r.error).toMatch(/reload/i);
   });
 });

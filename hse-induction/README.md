@@ -57,6 +57,8 @@ mouse button held, or with the arrow keys.
    - **Backspace**: undo the last one
    - **[ / ]**: ring smaller / bigger (0.5–4 m). Resizes the last ring placed and sets the size for the next one
    - The panel lists every hotspot: ✓ placed, ▶ next
+   - **X**: delete the wall box under the + (it turns yellow) when it blocks a real walkway. **Z** puts it back.
+     Floor boxes can't be deleted. Rerunning `new-site` rebuilds all boxes, so do any `--raise` rerun first.
    - **, / .**: move the scan down / up (5 cm steps) as a preview. If the view looks too tall or short, press until
      the rings sit on the floor, then rerun `npm run new-site` with the `--raise …` the panel shows plus
      `--keep-hotspots`. This rebuilds the floor and walls at the right height.

@@ -1,12 +1,12 @@
 import * as pc from 'playcanvas';
 import { parseHotspotsMd, mergeHotspots, unmatchedPlaced } from './hotspotsMd.js';
-import { queueRows, stepRadius, pickNext } from './setupLogic.js';
+import { queueRows, stepRadius, pickNext, pickBox } from './setupLogic.js';
 
 const MARK = { placed: '✓', next: '▶', todo: '·' };
 const el = (id) => document.getElementById(id);
 
 // ?setup: walk or fly to each hotspot from hotspots.md and press H to place it. Saves to public/site.json (dev server only).
-export async function enableSetup({ app, site, player, rings, splat }) {
+export async function enableSetup({ app, site, player, rings, splat, camera, boxes }) {
   const panel = el('setup');
   panel.hidden = false;
   el('checklist').hidden = true;
@@ -33,6 +33,16 @@ export async function enableSetup({ app, site, player, rings, splat }) {
   let radius = placed.at(-1)?.radius ?? 1.5;
   // , and . move the scan up and down to line its floor up with the rings (preview only; new-site --raise makes it stick).
   let raise = 0;
+  // X deletes the red wall box under the crosshair (highlighted yellow); Z brings back the last one deleted.
+  const removed = [];
+  let target = -1;
+  el('crosshair').hidden = false;
+  app.on('update', () => {
+    const f = camera.forward;
+    const p = camera.getPosition();
+    target = pickBox([p.x, p.y, p.z], [f.x, f.y, f.z], site.colliders);
+    boxes?.highlight(site.colliders[target] ?? null);
+  });
   const baseY = splat?.getLocalPosition().y ?? 0;
   // A renamed heading gets a new id, so its old position can't carry over: say so before the next save drops it.
   let message = dropped.length
@@ -56,14 +66,15 @@ export async function enableSetup({ app, site, player, rings, splat }) {
       <ol class="setup-list">${rows}</ol>
       <p class="setup-size">Ring size: <b>${radius.toFixed(2)} m</b> <span>${last ? `(also resizes ${esc(last.title)})` : ''}</span></p>
       ${raise ? `<p class="setup-size">Scan raised <b>${raise.toFixed(2)} m</b> <span>(preview) → rerun new-site with <b>--raise ${raise.toFixed(2)} --keep-hotspots</b></span></p>` : ''}
-      <p class="setup-keys">, . scan down / up (until the rings sit on the floor) · F fly · H place here · N next · B back · Backspace undo · [ ] ring size</p>
+      ${removed.length ? `<p class="setup-size">Walls removed: <b>${removed.length}</b> <span>(Z puts the last one back)</span></p>` : ''}
+      <p class="setup-keys">X delete the yellow box · Z undo delete · , . scan down / up (until the rings sit on the floor) · F fly · H place here · N next · B back · Backspace undo · [ ] ring size</p>
       ${message ? `<p class="setup-msg">${esc(message)}</p>` : ''}`);
   }
 
   async function save() {
     // Keep file order so the checklist matches hotspots.md.
     const hotspots = items.flatMap((it) => placed.filter((p) => p.id === it.id));
-    const body = JSON.stringify({ hotspots });
+    const body = JSON.stringify({ hotspots, colliders: site.colliders });
     const res = await fetch('__save-site', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
     message = res.ok ? 'Saved' : `Not saved: ${await res.text()}`;
     if (res.ok) site.hotspots = hotspots;
@@ -97,6 +108,18 @@ export async function enableSetup({ app, site, player, rings, splat }) {
       const p = splat.getLocalPosition();
       splat.setLocalPosition(p.x, baseY + raise, p.z);
       render();
+    } else if (e.key === pc.KEY_X) {
+      if (target < 0) { message = 'Look at a red box first (it turns yellow).'; render(); return; }
+      const [c] = site.colliders.splice(target, 1); // the player walks against this same list
+      removed.push(c);
+      boxes?.hide(c);
+      save();
+    } else if (e.key === pc.KEY_Z) {
+      const c = removed.pop();
+      if (!c) return;
+      site.colliders.push(c);
+      boxes?.show(c);
+      save();
     } else if (e.key === pc.KEY_BACKSPACE) {
       const id = order.pop();
       if (!id) return;
