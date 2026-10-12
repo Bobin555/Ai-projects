@@ -1,0 +1,23 @@
+{
+  "splatUrl": "local-assets/site.sog",
+  "start": { "position": [0, 0, 0], "yaw": 0 },
+  "colliders": [
+    { "position": [0, -0.5, 0], "size": [40, 1, 40] }
+  ],
+  "hotspots": [
+    {
+      "id": "fire-exit-north",
+      "position": [5, 0, -5],
+      "radius": 1.5,
+      "title": "Emergency exit",
+      "points": ["Keep this door clear at all times", "Assembly point is car park B"]
+    },
+    {
+      "id": "chemical-store",
+      "position": [-5, 0, 5],
+      "radius": 1.5,
+      "title": "Chemical store",
+      "points": ["Authorised staff only", "Check the SDS before handling any container"]
+    }
+  ]
+}
