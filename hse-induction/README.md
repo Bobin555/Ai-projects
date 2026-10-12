@@ -55,6 +55,8 @@ mouse button held, or with the arrow keys.
    - **H**: place the hotspot where you stand. It saves automatically.
    - **N**: skip
    - **Backspace**: undo the last one
+   - **[ / ]**: ring smaller / bigger (0.5–4 m). Resizes the last ring placed and sets the size for the next one
+   - The panel lists every hotspot: ✓ placed, ▶ next, ↷ skipped
 
    To change the text later, edit `hotspots.md` and open `?setup` once. The
    positions stay where they are.

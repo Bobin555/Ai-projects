@@ -1,7 +1,8 @@
 import * as pc from 'playcanvas';
 import { parseHotspotsMd, mergeHotspots, unmatchedPlaced } from './hotspotsMd.js';
+import { queueRows, stepRadius } from './setupLogic.js';
 
-const RADIUS = 1.5;
+const MARK = { placed: '✓', next: '▶', skipped: '↷', todo: '·' };
 const el = (id) => document.getElementById(id);
 
 // ?setup: walk or fly to each hotspot from hotspots.md and press H to place it. Saves to public/site.json (dev server only).
@@ -29,6 +30,8 @@ export async function enableSetup({ app, site, player, rings }) {
   const order = placed.map((h) => h.id); // undo stack
   placed.forEach((h) => rings.add(h));
   let skipped = new Set();
+  // Ring size for the next placement; [ and ] also resize the last ring placed.
+  let radius = placed.at(-1)?.radius ?? 1.5;
   // A renamed heading gets a new id, so its old position can't carry over: say so before the next save drops it.
   let message = dropped.length
     ? `Not in hotspots.md (renamed or removed), will be dropped when you place the next one: ${dropped.join(', ')}`
@@ -39,9 +42,14 @@ export async function enableSetup({ app, site, player, rings }) {
   function render() {
     const n = next();
     const done = placed.length;
+    const last = placed.find((p) => p.id === order.at(-1));
+    const rows = queueRows(items, placed, skipped, n?.id)
+      .map((r) => `<li class="q-${r.state}">${MARK[r.state]} ${esc(r.title)}</li>`).join('');
     say(`
       <p class="setup-next">${n ? `Place: <b>${esc(n.title)}</b>` : 'All placed'} <span>(${done} of ${items.length} placed)</span></p>
-      <p class="setup-keys">F fly · H place here · N skip · Backspace undo</p>
+      <ol class="setup-list">${rows}</ol>
+      <p class="setup-size">Ring size: <b>${radius.toFixed(2)} m</b> <span>${last ? `(also resizes ${esc(last.title)})` : ''}</span></p>
+      <p class="setup-keys">F fly · H place here · N skip · Backspace undo · [ ] ring size</p>
       ${message ? `<p class="setup-msg">${esc(message)}</p>` : ''}`);
   }
 
@@ -60,7 +68,7 @@ export async function enableSetup({ app, site, player, rings }) {
       const n = next();
       if (!n) return;
       const [x, , z] = player.getPosition();
-      const h = { ...n, position: [+x.toFixed(2), 0, +z.toFixed(2)], radius: RADIUS };
+      const h = { ...n, position: [+x.toFixed(2), 0, +z.toFixed(2)], radius };
       placed.push(h);
       order.push(h.id);
       rings.add(h);
@@ -71,6 +79,14 @@ export async function enableSetup({ app, site, player, rings }) {
       if (!next()) skipped = new Set(); // wrap around to anything still unplaced
       message = '';
       render();
+    } else if (e.key === pc.KEY_OPEN_BRACKET || e.key === pc.KEY_CLOSE_BRACKET) {
+      radius = stepRadius(radius, e.key === pc.KEY_CLOSE_BRACKET ? 1 : -1);
+      const i = placed.findIndex((p) => p.id === order.at(-1));
+      if (i < 0) { render(); return; }
+      placed[i] = { ...placed[i], radius };
+      rings.remove(placed[i].id);
+      rings.add(placed[i]);
+      save();
     } else if (e.key === pc.KEY_BACKSPACE) {
       const id = order.pop();
       if (!id) return;
