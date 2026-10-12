@@ -1,8 +1,8 @@
 import * as pc from 'playcanvas';
 import { parseHotspotsMd, mergeHotspots, unmatchedPlaced } from './hotspotsMd.js';
-import { queueRows, stepRadius } from './setupLogic.js';
+import { queueRows, stepRadius, pickNext } from './setupLogic.js';
 
-const MARK = { placed: '✓', next: '▶', skipped: '↷', todo: '·' };
+const MARK = { placed: '✓', next: '▶', todo: '·' };
 const el = (id) => document.getElementById(id);
 
 // ?setup: walk or fly to each hotspot from hotspots.md and press H to place it. Saves to public/site.json (dev server only).
@@ -29,7 +29,6 @@ export async function enableSetup({ app, site, player, rings }) {
   let placed = mergeHotspots(items, site.hotspots);
   const order = placed.map((h) => h.id); // undo stack
   placed.forEach((h) => rings.add(h));
-  let skipped = new Set();
   // Ring size for the next placement; [ and ] also resize the last ring placed.
   let radius = placed.at(-1)?.radius ?? 1.5;
   // A renamed heading gets a new id, so its old position can't carry over: say so before the next save drops it.
@@ -37,19 +36,23 @@ export async function enableSetup({ app, site, player, rings }) {
     ? `Not in hotspots.md (renamed or removed), will be dropped when you place the next one: ${dropped.join(', ')}`
     : '';
 
-  const next = () => items.find((it) => !placed.some((p) => p.id === it.id) && !skipped.has(it.id));
+  let currentId = null; // N and B move this; H places it
+  const next = () => {
+    currentId = pickNext(items, placed, currentId) ?? currentId;
+    return items.find((it) => it.id === currentId && !placed.some((p) => p.id === it.id));
+  };
 
   function render() {
     const n = next();
     const done = placed.length;
     const last = placed.find((p) => p.id === order.at(-1));
-    const rows = queueRows(items, placed, skipped, n?.id)
+    const rows = queueRows(items, placed, n?.id)
       .map((r) => `<li class="q-${r.state}">${MARK[r.state]} ${esc(r.title)}</li>`).join('');
     say(`
       <p class="setup-next">${n ? `Place: <b>${esc(n.title)}</b>` : 'All placed'} <span>(${done} of ${items.length} placed)</span></p>
       <ol class="setup-list">${rows}</ol>
       <p class="setup-size">Ring size: <b>${radius.toFixed(2)} m</b> <span>${last ? `(also resizes ${esc(last.title)})` : ''}</span></p>
-      <p class="setup-keys">F fly · H place here · N skip · Backspace undo · [ ] ring size</p>
+      <p class="setup-keys">F fly · H place here · N next · B back · Backspace undo · [ ] ring size</p>
       ${message ? `<p class="setup-msg">${esc(message)}</p>` : ''}`);
   }
 
@@ -73,10 +76,8 @@ export async function enableSetup({ app, site, player, rings }) {
       order.push(h.id);
       rings.add(h);
       save();
-    } else if (e.key === pc.KEY_N) {
-      const n = next();
-      if (n) skipped.add(n.id);
-      if (!next()) skipped = new Set(); // wrap around to anything still unplaced
+    } else if (e.key === pc.KEY_N || e.key === pc.KEY_B) {
+      currentId = pickNext(items, placed, currentId, e.key === pc.KEY_N ? 1 : -1) ?? currentId;
       message = '';
       render();
     } else if (e.key === pc.KEY_OPEN_BRACKET || e.key === pc.KEY_CLOSE_BRACKET) {
@@ -92,7 +93,7 @@ export async function enableSetup({ app, site, player, rings }) {
       if (!id) return;
       placed = placed.filter((p) => p.id !== id);
       rings.remove(id);
-      skipped.delete(id);
+      currentId = id; // undone one is next again
       save();
     }
   });

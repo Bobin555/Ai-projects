@@ -53,10 +53,10 @@ mouse button held, or with the arrow keys.
    The panel shows the next hotspot to place.
    - **F**: fly (Space up, C down)
    - **H**: place the hotspot where you stand. It saves automatically.
-   - **N**: skip
+   - **N** / **B**: next / back through the list (to return to one you passed)
    - **Backspace**: undo the last one
    - **[ / ]**: ring smaller / bigger (0.5–4 m). Resizes the last ring placed and sets the size for the next one
-   - The panel lists every hotspot: ✓ placed, ▶ next, ↷ skipped
+   - The panel lists every hotspot: ✓ placed, ▶ next
 
    To change the text later, edit `hotspots.md` and open `?setup` once. The
    positions stay where they are.

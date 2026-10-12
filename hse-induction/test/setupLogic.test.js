@@ -1,20 +1,41 @@
 import { describe, it, expect } from 'vitest';
-import { queueRows, stepRadius, MIN_RADIUS, MAX_RADIUS } from '../src/setupLogic.js';
+import { queueRows, stepRadius, pickNext, MIN_RADIUS, MAX_RADIUS } from '../src/setupLogic.js';
 
 const items = ['a', 'b', 'c', 'd'].map((id) => ({ id, title: id.toUpperCase() }));
 
 describe('queueRows', () => {
-  it('marks placed, next, skipped and still to do, in file order', () => {
-    const rows = queueRows(items, [{ id: 'a' }], new Set(['b']), 'c');
-    expect(rows).toEqual([
+  it('marks placed, next and still to do, in file order', () => {
+    expect(queueRows(items, [{ id: 'a' }], 'c')).toEqual([
       { title: 'A', state: 'placed' },
-      { title: 'B', state: 'skipped' },
+      { title: 'B', state: 'todo' },
       { title: 'C', state: 'next' },
       { title: 'D', state: 'todo' },
     ]);
   });
   it('has no next row when everything is placed', () => {
-    expect(queueRows(items, items, new Set(), undefined).every((r) => r.state === 'placed')).toBe(true);
+    expect(queueRows(items, items, undefined).every((r) => r.state === 'placed')).toBe(true);
+  });
+});
+
+describe('pickNext', () => {
+  const placed = [{ id: 'b' }];
+  it('starts at the first unplaced hotspot', () => {
+    expect(pickNext(items, placed, null)).toBe('a');
+  });
+  it('keeps the current one while it is unplaced', () => {
+    expect(pickNext(items, placed, 'c')).toBe('c');
+  });
+  it('moves on to the next unplaced one once the current one is placed', () => {
+    expect(pickNext(items, [{ id: 'b' }, { id: 'c' }], 'c')).toBe('d');
+  });
+  it('steps forward and back over placed ones, wrapping at both ends', () => {
+    expect(pickNext(items, placed, 'a', 1)).toBe('c');
+    expect(pickNext(items, placed, 'c', -1)).toBe('a');
+    expect(pickNext(items, placed, 'a', -1)).toBe('d');
+    expect(pickNext(items, placed, 'd', 1)).toBe('a');
+  });
+  it('is undefined when everything is placed', () => {
+    expect(pickNext(items, items, 'a', 1)).toBeUndefined();
   });
 });
 
