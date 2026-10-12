@@ -31,7 +31,7 @@ export function createScene(canvas, site, onProgress = () => {}) {
       if (site.splatPosition) splat.setPosition(...site.splatPosition);
       app.root.addChild(splat);
       app.start();
-      resolve({ app, camera, colliders: site.colliders });
+      resolve({ app, camera, splat, colliders: site.colliders });
     });
     asset.once("error", (err) => { setTimeout(() => app.destroy()); reject(Object.assign(new Error(`Could not load the site scan (${site.splatUrl}).`), { detail: String(err) })); });
     app.assets.add(asset);

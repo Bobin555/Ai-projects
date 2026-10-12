@@ -1,4 +1,4 @@
-// Usage: npm run new-site -- <scan.ply> [--up x|y|z|1|2|3] [--flip] [--box minX,minY,minZ,maxX,maxY,maxZ] [--floaters] [--keep-hotspots]
+// Usage: npm run new-site -- <scan.ply> [--up x|y|z|1|2|3] [--flip] [--box minX,minY,minZ,maxX,maxY,maxZ] [--floaters] [--keep-hotspots] [--raise metres]
 // Raw scan → cleaned, levelled, compressed splat + public/site.json with walls, floor and a start point.
 import { readFileSync, writeFileSync, statSync, existsSync } from 'node:fs';
 import { dirname, join, resolve, relative } from 'node:path';
@@ -20,11 +20,14 @@ const diagnose = takeFlag('--diagnose');
 const upArg = flag('--up');
 const up = /^[123]$/.test(upArg ?? '') ? Number(upArg) : upArg;
 const boxArg = flag('--box');
+const raiseArg = flag('--raise');
+const raise = raiseArg === undefined ? 0 : Number(raiseArg);
 const input = args[0];
 const fail = (msg) => { console.error(msg); process.exit(1); };
 
-if (!input) fail('Usage: npm run new-site -- <scan.ply> [--up x|y|z|1|2|3] [--flip] [--box minX,minY,minZ,maxX,maxY,maxZ] [--floaters] [--keep-hotspots]');
+if (!input) fail('Usage: npm run new-site -- <scan.ply> [--up x|y|z|1|2|3] [--flip] [--box minX,minY,minZ,maxX,maxY,maxZ] [--floaters] [--keep-hotspots] [--raise metres]');
 if (up && !['x', 'y', 'z', 1, 2, 3].includes(up)) fail('--up must be x, y, z, or a candidate number 1-3 from the report');
+if (!Number.isFinite(raise) || Math.abs(raise) > 3) fail('--raise needs a number of metres, e.g. --raise 0.3 (from the ?setup panel)');
 const box = boxArg ? boxArg.split(',').map(Number) : null;
 if (box && (box.length !== 6 || box.some((n) => !Number.isFinite(n)))) fail('--box needs 6 numbers: minX,minY,minZ,maxX,maxY,maxZ');
 
@@ -45,6 +48,12 @@ const { splat, stats } = cleanSplat(parsePly(readFileSync(input)), { box });
 
 console.log('Levelling…');
 const level = levelSplat(splat, { up, flip });
+if (raise) {
+  // The floor was found too high (raise > 0, the view looks too tall) or too low: move the scan so the real floor sits at y = 0.
+  for (let n = 1; n < level.positions.length; n += 3) level.positions[n] += raise;
+  level.position[1] += raise;
+  level.roomHeight += raise;
+}
 if (level.missingProps.length) {
   console.log(`  This scan has no orientation data (missing ${level.missingProps.join(', ')}),
   so it can't find "up" by itself. Using --up ${typeof up === 'string' ? up : 'y'}; check the result looks upright.`);

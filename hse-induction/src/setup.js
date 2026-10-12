@@ -6,7 +6,7 @@ const MARK = { placed: '✓', next: '▶', todo: '·' };
 const el = (id) => document.getElementById(id);
 
 // ?setup: walk or fly to each hotspot from hotspots.md and press H to place it. Saves to public/site.json (dev server only).
-export async function enableSetup({ app, site, player, rings }) {
+export async function enableSetup({ app, site, player, rings, splat }) {
   const panel = el('setup');
   panel.hidden = false;
   el('checklist').hidden = true;
@@ -31,6 +31,9 @@ export async function enableSetup({ app, site, player, rings }) {
   placed.forEach((h) => rings.add(h));
   // Ring size for the next placement; [ and ] also resize the last ring placed.
   let radius = placed.at(-1)?.radius ?? 1.5;
+  // , and . move the scan up and down to line its floor up with the rings (preview only; new-site --raise makes it stick).
+  let raise = 0;
+  const baseY = splat?.getLocalPosition().y ?? 0;
   // A renamed heading gets a new id, so its old position can't carry over: say so before the next save drops it.
   let message = dropped.length
     ? `Not in hotspots.md (renamed or removed), will be dropped when you place the next one: ${dropped.join(', ')}`
@@ -52,7 +55,8 @@ export async function enableSetup({ app, site, player, rings }) {
       <p class="setup-next">${n ? `Place: <b>${esc(n.title)}</b>` : 'All placed'} <span>(${done} of ${items.length} placed)</span></p>
       <ol class="setup-list">${rows}</ol>
       <p class="setup-size">Ring size: <b>${radius.toFixed(2)} m</b> <span>${last ? `(also resizes ${esc(last.title)})` : ''}</span></p>
-      <p class="setup-keys">F fly · H place here · N next · B back · Backspace undo · [ ] ring size</p>
+      ${raise ? `<p class="setup-size">Scan raised <b>${raise.toFixed(2)} m</b> <span>(preview) → rerun new-site with <b>--raise ${raise.toFixed(2)} --keep-hotspots</b></span></p>` : ''}
+      <p class="setup-keys">, . scan down / up (until the rings sit on the floor) · F fly · H place here · N next · B back · Backspace undo · [ ] ring size</p>
       ${message ? `<p class="setup-msg">${esc(message)}</p>` : ''}`);
   }
 
@@ -88,6 +92,11 @@ export async function enableSetup({ app, site, player, rings }) {
       rings.remove(placed[i].id);
       rings.add(placed[i]);
       save();
+    } else if ((e.key === pc.KEY_COMMA || e.key === pc.KEY_PERIOD) && splat) {
+      raise = Math.round((raise + (e.key === pc.KEY_PERIOD ? 0.05 : -0.05)) * 100) / 100;
+      const p = splat.getLocalPosition();
+      splat.setLocalPosition(p.x, baseY + raise, p.z);
+      render();
     } else if (e.key === pc.KEY_BACKSPACE) {
       const id = order.pop();
       if (!id) return;
