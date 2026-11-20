@@ -61,6 +61,7 @@ Design · 2026-11-20 · Status: draft for review
 
 - **Sensitive documents never leave the user's network.** The engine must run fully offline: a local model (Ollama, or an OpenAI-compatible local server such as vLLM), a local embedding model, local storage, no telemetry, and dependencies installable without internet access.
 - **This cloud session** has no GPU, and its network policy currently blocks nrc.gov. Access will be requested when building starts; alternatively the user uploads the public PDFs.
+- **Model providers.** Claude through the Anthropic API or Microsoft Foundry (Azure); GPT models through Azure OpenAI; local models through Ollama or vLLM. Azure private endpoints are reachable only from inside the user's network, not from this cloud session, and they change the network route, not where documents are processed.
 - **Public NRC documents are redacted.** Proprietary content is withheld, so most evidence is unavailable.
 - **Repository** (`bobin555/ai-projects`): code, pack configuration, tests and docs only. Documents are downloaded into a git-ignored cache.
 - **Language:** Python, with few dependencies, so it can be carried into a restricted network.
@@ -77,6 +78,7 @@ Design · 2026-11-20 · Status: draft for review
 - **B. Split: sensitive documents local, non-sensitive ones on a hosted model.** Only if test results show local quality is insufficient; needs reliable sensitivity labels.
 - **Sending "relevant passages" of sensitive documents to a hosted model:** rejected, because the passages are the sensitive part.
 - For the **public** pack a hosted model is allowed; see open question Q1.
+- **Azure private endpoints** keep the network route private, but documents are still processed in the provider's data centres (Microsoft's, or Anthropic's for Foundry deployments hosted on Anthropic). Whether that is acceptable for sensitive documents is the user's security team's decision.
 
 ### 6.3 Replicating to new document sets
 - **A. Engine plus packs (chosen).** Engine fixes help every pack, packs stay separate, and pack changes are small files that can be reviewed in git.
@@ -116,10 +118,11 @@ pack register ──► fetch (cache, checksums) ──► read (pages, headings
 3. **Store.** One store per pack. v1 uses SQLite with FTS5 keyword search and an optional vector table, behind an interface so PostgreSQL with pgvector can replace it inside the user's network.
 4. **Aliases.** `aliases.csv` maps alternative names to a canonical term (for example "Criterion 10", "MHTGR-DC 10" and "PDC 10"). Queries are expanded with aliases. Identifiers (criterion numbers, CFR sections, Regulatory Guide numbers, accession numbers) must match exactly.
 5. **Search.** Keyword search with aliases in v1; embedding search is added when a local embedding model is available, and results are merged. Default filter: current revisions only. Returns passages with their addresses.
-6. **Model adapter.** One interface with two back-ends, selected by the pack:
-   - *Hosted:* the Claude API with model `claude-opus-5-5`. Answers use the API's citations feature: retrieved passages are passed as one custom-content document per source document, one content block per passage, so each citation maps back to a passage address. Extraction uses structured output. These are separate calls, because the API does not allow citations and structured output in the same request. Bulk extraction may use the Batch API.
-   - *Local:* Ollama or an OpenAI-compatible local server, with JSON-schema-constrained output that requires a passage ID and an exact quote for every statement.
-   - A pack marked `offline` cannot select the hosted back-end; the engine refuses at start-up.
+6. **Model connectors.** One interface with two connectors:
+   - *Claude* (Anthropic SDK), through the Anthropic API or Claude in Microsoft Foundry. Default model `claude-opus-5-5`. Answers use the citations feature: retrieved passages are passed as one custom-content document per source document, one content block per passage, so each citation maps back to a passage address. Extraction uses structured output. These are separate calls, because citations and structured output can't be combined in one request. Bulk extraction may use the Batch API on the Anthropic API (it is not available on Foundry).
+   - *OpenAI-compatible*, covering Azure OpenAI, Ollama and vLLM. These have no built-in citations, so output is constrained to a JSON schema that requires a passage ID and an exact quote for every statement.
+   - The quote verifier (item 8) applies to every connector, so the standard is the same whichever model answers.
+   - A pack marked `offline` may only use local providers; the engine refuses anything else at start-up.
 7. **Answerer.** Question → aliases → search → model → answer laid out as the pack's `answer_format.md` specifies: each statement with its address and quote, or "Not found. Searched: …".
 8. **Quote verifier.** Deterministic, no model involved. A quote passes only if it appears in the cited passage of the cited revision after normalising whitespace, line-break hyphenation and quotation marks. It also checks that the cited revision is current. Failures are flagged ⚠ on the statement; nothing is silently dropped or marked verified.
 9. **Extractor.** Each document layout has a recipe in `layouts/<layout>.yaml` naming the record types to look for, instructions for each field and a worked example. Extraction runs section by section, with the heading path as context. The model fills records with source addresses and quotes; every record starts as `draft`, and the verifier checks its quotes. A person reviews records in an exported review sheet (CSV) and marks each `verified`, `corrected` or `rejected`; the import records who reviewed it and when.
@@ -134,7 +137,7 @@ pack register ──► fetch (cache, checksums) ──► read (pages, headings
 ```
 packs/<name>/
   pack.yaml          name, description, sensitivity (public or sensitive), offline (true or false),
-                     model back-end and model, embedding model (optional)
+                     models per job (extract, answer, judge), embedding model (optional)
   register.csv       documents, revisions, status, URLs, checksums
   records.yaml       record types, fields, link types
   layouts/           one extraction recipe per document layout
@@ -144,6 +147,18 @@ packs/<name>/
   outside.md         what is known to be outside this corpus
   tests.csv          test questions with expected sources or "not found"
 ```
+
+**Models per job.** `pack.yaml` names a model for each job: `extract` (filling records), `answer` (answers and traces) and `judge` (grading test answers against their expected key points). Every job starts on the same model. A job moves to a cheaper or smaller model, or a lower effort setting, only when its test scores hold. There is no automatic per-question model choice, and a model setting can never move a document between local and hosted processing: the pack's `offline` flag fixes that.
+
+```yaml
+# packs/nrc-xenergy/pack.yaml (build phase)
+models:
+  extract: { provider: claude, model: claude-opus-5-5, effort: low }
+  answer:  { provider: claude, model: claude-opus-5-5, effort: high }
+  judge:   { provider: claude, model: claude-opus-5-5, effort: low }
+```
+
+For the comparison run on the user's laptop, `answer` (and optionally `extract`) switch to `provider: local` with an Ollama model, while `judge` stays on Claude so grading is independent of the model under test.
 
 A second, tiny pack built from synthetic documents lives in the engine's own tests, to prove that a new pack needs no code changes.
 
@@ -214,6 +229,9 @@ Code, pack configuration (registers with accession numbers, URLs and checksums),
 - First pack: public NRC documents for X-energy and Long Mott.
 - Regulations as requirements and accepted methods; applicant documents as claims and arguments; NRC evaluations as findings; evidence as references only, for now.
 - First job: trace a requirement through claim, argument, cited evidence and NRC finding.
+- Model providers: Claude (Anthropic API or Microsoft Foundry), Azure OpenAI and local models, through two connectors.
+- Models are chosen per job in a fixed table, set from test results; no automatic model routing.
+- Build phase: Claude through the Anthropic API in this session (the API key is entered through a secure form, never in chat). The same tests then run with a local model through Ollama on the user's laptop, to measure the gap.
 
 ## 10. Calls made by Claude (open to change)
 
@@ -226,10 +244,15 @@ Code, pack configuration (registers with accession numbers, URLs and checksums),
 - Initial document scope as listed in 7.4, growing after the first test run.
 - Documents kept out of git, in a cache folder.
 - Success-criteria thresholds in section 8.
+- Every job starts on `claude-opus-5-5`: extraction and judging at low effort, answering at high effort.
+- The judge stays on Claude for local runs, so grading is independent of the model under test. For Claude's own runs, key-point grades are spot-checked by the user.
+- Public-pack extraction may use the Batch API (half price) when turnaround isn't urgent.
+- A spending limit on the Anthropic account, set by the user.
+- The laptop's local model is chosen once the user reports the laptop's memory and GPU; a small (around 8B) instruct model is the starting default.
 
 ## 11. Open questions
 
-- **Q1 (the user's decision): which model reads and answers for the public pack while we build?** Hosted (Claude API: best quality now, needs an API key and has a per-use cost), local (Ollama on the user's own computer: matches the future in-network setup, no per-use cost, lower quality), or both. Pending.
+- None open. Q1 (which model to build with) was resolved as "both"; see section 9.
 
 ## 12. Later
 
