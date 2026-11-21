@@ -278,3 +278,4 @@ Code, pack configuration (registers with accession numbers, URLs and checksums),
 - Sensitive packs inside the user's network.
 - Evidence layer, once evidence documents are available.
 - Value-consistency checks, a web interface and per-document access control.
+- A domain ontology, added in steps when test questions need it: concept record types (systems, structures and components, safety functions, event categories) with `part_of`, `performs` and `addresses` links, as pack configuration only; broader and narrower terms in the alias table for search expansion; export to a graph database only if the graph outgrows SQLite. Trigger: test questions such as "what depends on X?" that search can't answer.
