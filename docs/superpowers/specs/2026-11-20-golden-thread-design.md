@@ -1,6 +1,6 @@
 # Golden Thread: traceable question-answering over controlled documents
 
-Design · 2026-11-20 · Status: draft for review
+Design · 2026-11-20 · Status: approved 2026-11-21
 
 ## 1. Intent
 
@@ -120,7 +120,7 @@ pack register ──► fetch (cache, checksums) ──► read (pages, headings
 5. **Search.** Keyword search with aliases in v1; embedding search is added when a local embedding model is available, and results are merged. Default filter: current revisions only. Returns passages with their addresses.
 6. **Model connectors.** One interface with two connectors:
    - *Claude* (Anthropic SDK), through the Anthropic API or Claude in Microsoft Foundry. Default model `claude-opus-5-5`. Answers use the citations feature: retrieved passages are passed as one custom-content document per source document, one content block per passage, so each citation maps back to a passage address. Extraction uses structured output. These are separate calls, because citations and structured output can't be combined in one request. Bulk extraction may use the Batch API on the Anthropic API (it is not available on Foundry).
-   - *OpenAI-compatible*, covering Azure OpenAI, Ollama and vLLM. These have no built-in citations, so output is constrained to a JSON schema that requires a passage ID and an exact quote for every statement.
+   - *OpenAI-compatible* (phase 2), covering Azure OpenAI, Ollama and vLLM. These have no built-in citations, so output is constrained to a JSON schema that requires a passage ID and an exact quote for every statement.
    - The quote verifier (item 8) applies to every connector, so the standard is the same whichever model answers.
    - A pack marked `offline` may only use local providers; the engine refuses anything else at start-up.
 7. **Answerer.** Question → aliases → search → model → answer laid out as the pack's `answer_format.md` specifies: each statement with its address and quote, or "Not found. Searched: …".
@@ -220,6 +220,13 @@ Links: Claim `meets` Requirement · Argument `supports` Claim · Argument `follo
 
 Code, pack configuration (registers with accession numbers, URLs and checksums), layouts, aliases, rules, tests and docs. Never: downloaded documents, extracted text, stores, logs, the spend ledger, review sheets containing document text, or sensitive or personal material.
 
+### 7.7 Phases
+
+- **Phase 1 (now):** the engine and the `nrc-xenergy` pack, with the Claude connector only. Three things go in from the start so that phase 2 needs no rework: the swappable connector interface, the model-independent quote verifier, and the `offline` setting.
+- **Phase 2 (later):** the OpenAI-compatible connector (local models and Azure OpenAI), and the comparison run with a local model on the user's laptop.
+- No fine-tuning in either phase.
+- Building the engine needs no API key. Paid API runs start only once the budget guard exists, and the user is asked before the first one.
+
 ## 8. Success criteria (v1)
 
 - 100% of quotes displayed as verified pass the verifier (a hard rule, not a target).
@@ -241,6 +248,7 @@ Code, pack configuration (registers with accession numbers, URLs and checksums),
 - Models are chosen per job in a fixed table, set from test results; no automatic model routing.
 - Build phase: Claude through the Anthropic API in this session (the API key is entered through a secure form, never in chat). The same tests then run with a local model through Ollama on the user's laptop, to measure the gap.
 - A budget guard in the engine (per run and per month), in addition to the spending limit on the Anthropic account.
+- Build in two phases (section 7.7): Claude first, the local and Azure connector later. No fine-tuning.
 
 ## 10. Calls made by Claude (open to change)
 
