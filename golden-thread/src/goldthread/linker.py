@@ -11,11 +11,13 @@ from goldthread.store import Store
 
 @dataclass
 class LinkReport:
-    created: int = 0
+    created: int = 0  # links that did not exist before
+    removed: int = 0  # links that no longer follow from the records (rejected or corrected)
     unresolved: list[str] = field(default_factory=list)  # "<record id>.<field>=<value>"
 
 
 def link_records(store: Store, schema: RecordSchema, aliases: AliasTable) -> LinkReport:
+    """Recompute all links from the records as they are now (links are derived state, never edited)."""
     by_type: dict[str, list[Record]] = defaultdict(list)
     for rec in store.records():
         if rec.status != "rejected":
@@ -25,6 +27,7 @@ def link_records(store: Store, schema: RecordSchema, aliases: AliasTable) -> Lin
         return normalise_term(aliases.canonical(value) or value)
 
     report = LinkReport()
+    computed: list[Link] = []
     for lt in schema.link_types.values():
         for src in by_type.get(lt.from_type, []):
             value = str(src.fields.get(lt.field) or "").strip()
@@ -46,8 +49,8 @@ def link_records(store: Store, schema: RecordSchema, aliases: AliasTable) -> Lin
                 report.unresolved.append(f"{src.id}.{lt.field}={value}")
                 continue
             for target in targets:
-                link = Link(target.id, lt.name, src.id) if lt.reverse else Link(src.id, lt.name, target.id)
-                if not store.links(src=link.src, dst=link.dst, link_type=link.link_type):
-                    store.add_link(link)
-                    report.created += 1
+                computed.append(Link(target.id, lt.name, src.id) if lt.reverse else Link(src.id, lt.name, target.id))
+    before, after = set(store.links()), set(computed)
+    report.created, report.removed = len(after - before), len(before - after)
+    store.replace_links(sorted(after, key=lambda l: (l.link_type, l.src, l.dst)))
     return report

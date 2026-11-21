@@ -74,6 +74,7 @@ class RecordType:
     prefix: str
     fields: tuple[str, ...]
     required: tuple[str, ...]
+    identity: tuple[str, ...] = ()  # fields that tell apart two records quoting the same text
 
 
 @dataclass(frozen=True)

@@ -1,11 +1,11 @@
 record_types:
-  Requirement: {prefix: REQ, fields: [code, text], required: [code, text]}
-  AcceptedMethod: {prefix: MTH, fields: [code, title], required: [code]}
-  Claim: {prefix: CLM, fields: [key, requirement_code, text], required: [requirement_code, text]}
-  Argument: {prefix: ARG, fields: [key, claim_key, method_code, text], required: [claim_key, text]}
-  EvidenceRef: {prefix: EVD, fields: [key, argument_key, reference, title, available], required: [argument_key, reference]}
-  Finding: {prefix: FND, fields: [key, subject_code, conclusion], required: [subject_code, conclusion]}
-  Condition: {prefix: CND, fields: [key, finding_key, text], required: [finding_key, text]}
+  Requirement: {prefix: REQ, fields: [code, text], required: [code, text], identity: [code]}
+  AcceptedMethod: {prefix: MTH, fields: [code, title], required: [code], identity: [code]}
+  Claim: {prefix: CLM, fields: [key, requirement_code, text], required: [requirement_code, text], identity: [requirement_code]}
+  Argument: {prefix: ARG, fields: [key, claim_key, method_code, text], required: [claim_key, text], identity: [method_code]}
+  EvidenceRef: {prefix: EVD, fields: [key, argument_key, reference, title, available], required: [argument_key, reference], identity: [reference]}
+  Finding: {prefix: FND, fields: [key, subject_code, conclusion], required: [subject_code, conclusion], identity: [subject_code]}
+  Condition: {prefix: CND, fields: [key, finding_key, text], required: [finding_key, text], identity: []}
 link_types:
   meets: {from: Claim, field: requirement_code, to: {Requirement: code}, scope: code, reverse: false}
   supports: {from: Argument, field: claim_key, to: {Claim: key}, scope: chunk, reverse: false}

@@ -231,7 +231,11 @@ def _parse_schema(raw: dict[str, Any]) -> RecordSchema:
         missing = [f for f in required if f not in fields]
         if missing:
             raise PackError(f"records.yaml: {name}: required fields not in fields: {missing}")
-        types[name] = RecordType(name, str(spec["prefix"]), fields, required)
+        identity = tuple(spec.get("identity") or ())
+        unknown = [f for f in identity if f not in fields]
+        if unknown:
+            raise PackError(f"records.yaml: {name}: identity fields not in fields: {unknown}")
+        types[name] = RecordType(name, str(spec["prefix"]), fields, required, identity)
 
     links: dict[str, LinkType] = {}
     for name, spec in (raw.get("link_types") or {}).items():

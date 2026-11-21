@@ -16,9 +16,12 @@ class CheckReport:
 
 def run_checks(store: Store, schema: RecordSchema) -> CheckReport:
     records = [r for r in store.records() if r.status != "rejected"]
+    live = {r.id for r in records}
     incoming: dict[tuple[str, str], set[str]] = defaultdict(set)
     outgoing: dict[tuple[str, str], set[str]] = defaultdict(set)
     for link in store.links():
+        if link.src not in live or link.dst not in live:
+            continue
         incoming[(link.dst, link.link_type)].add(link.src)
         outgoing[(link.src, link.link_type)].add(link.dst)
 

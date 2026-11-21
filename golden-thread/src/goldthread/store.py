@@ -147,6 +147,13 @@ class Store:
                         (link.src, link.link_type, link.dst))
         self.db.commit()
 
+    def replace_links(self, links: Sequence[Link]) -> None:
+        """Links are derived from records: replace them all at once."""
+        with self.db:
+            self.db.execute("DELETE FROM links")
+            self.db.executemany("INSERT OR IGNORE INTO links (src, link_type, dst) VALUES (?, ?, ?)",
+                                [(l.src, l.link_type, l.dst) for l in links])
+
     def links(self, src: str | None = None, dst: str | None = None, link_type: str | None = None) -> list[Link]:
         clauses, args = [], []
         for column, value in (("src", src), ("dst", dst), ("link_type", link_type)):
@@ -166,6 +173,9 @@ class Store:
 
     def chunks_done(self, run_id: str) -> set[str]:
         return {r[0] for r in self.db.execute("SELECT chunk_id FROM extract_progress WHERE run_id = ?", (run_id,))}
+
+    def chunks_done_any_run(self) -> set[str]:
+        return {r[0] for r in self.db.execute("SELECT chunk_id FROM extract_progress")}
 
 
 REVIEWED = ("verified", "corrected", "rejected")

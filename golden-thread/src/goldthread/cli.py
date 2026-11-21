@@ -16,7 +16,7 @@ from goldthread.budget import BudgetGuard, Ledger, PriceTable, render_cost_summa
 from goldthread.checks import render_checks_md, run_checks
 from goldthread.config import Pack, PackError, load_pack
 from goldthread.evaluate import render_eval_report_md, run_eval, write_eval_report
-from goldthread.extractor import extract_pack
+from goldthread.extractor import extract_pack, extraction_status
 from goldthread.fetch import OfflineError, fetch_pack
 from goldthread.ingest import ingest_pack
 from goldthread.linker import link_records
@@ -83,9 +83,6 @@ class Context:
     def cost(self, run_id: str) -> None:
         print(render_cost_summary(summarise(self.ledger, self.pack.budget, run_id)), file=sys.stderr)
 
-    def searched(self) -> list[str]:
-        return [f"{d.key} — {d.title}" for d in self.store.documents(status="issued")]
-
 
 def _budget_stop(ctx: Context, command: str, stopped: str, run_id: str, remaining: Sequence[str]) -> int:
     print(f"Stopped: {stopped}. Not processed: {', '.join(remaining)}", file=sys.stderr)
@@ -128,7 +125,7 @@ def cmd_extract(ctx: Context, args) -> int:
                           ctx.guard(run_id), ctx.audit, run_id, resume=bool(args.resume), only_docs=args.docs)
     links = link_records(ctx.store, ctx.pack.schema, ctx.aliases)
     print(f"run {report.run_id}: chunks {report.chunks_done}/{report.chunks_total} · new records {report.records_new} · "
-          f"flagged {report.records_flagged} · links created {links.created}")
+          f"flagged {report.records_flagged} · links created {links.created}, removed {links.removed}")
     for item in report.failed_chunks:
         print(f"  ⚠ chunk failed: {item}")
     if links.unresolved:
@@ -154,6 +151,8 @@ def cmd_review_import(ctx: Context, args) -> int:
         print(f"  rejected {row}")
     for record_id in report.reverified_failed:
         print(f"  ⚠ {record_id}: quote does not match the source; left as draft")
+    links = link_records(ctx.store, ctx.pack.schema, ctx.aliases)  # decisions change which links hold
+    print(f"links recomputed: {links.created} added, {links.removed} removed")
     return EXIT_ERROR if report.rejected_rows else EXIT_OK
 
 
@@ -168,7 +167,19 @@ def cmd_ask(ctx: Context, args) -> int:
 
 
 def cmd_trace(ctx: Context, args) -> int:
-    print(render_trace_md(trace(ctx.store, ctx.aliases, args.code), ctx.searched()))
+    titles = {d.key: d.title for d in ctx.store.documents()}
+    searched, not_extracted = [], []
+    for key, (done, total) in extraction_status(ctx.pack, ctx.store).items():
+        label = f"{key} — {titles.get(key, '')}"
+        if key not in titles:
+            not_extracted.append(f"{label} (not ingested)")
+        elif total == 0:
+            not_extracted.append(f"{label} (no extractable text)")
+        elif done == total:
+            searched.append(label)
+        else:
+            not_extracted.append(label + (f" (partly extracted: {done}/{total} chunks)" if done else ""))
+    print(render_trace_md(trace(ctx.store, ctx.aliases, args.code), searched, not_extracted))
     return EXIT_OK
 
 

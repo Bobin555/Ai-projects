@@ -104,8 +104,20 @@ def _to_record(pack: Pack, store: Store, chunk: Chunk, item: Mapping, served_by:
     if not check.ok:
         flags.append(f"quote_failed: {check.reason}")
     flags += [f"missing_field: {name}" for name in missing_required(rt, fields)]
-    return Record(record_id(rt, address, quote), rt.name, fields, address, quote, "draft", tuple(flags),
+    return Record(record_id(rt, address, quote, fields), rt.name, fields, address, quote, "draft", tuple(flags),
                   extracted_by=served_by, run_id=run_id, chunk_id=chunk.id)
+
+
+def extraction_status(pack: Pack, store: Store) -> dict[str, tuple[int, int]]:
+    """Document key -> (chunks extracted in any run, chunks in the document), for issued documents with a layout."""
+    done = store.chunks_done_any_run()
+    status: dict[str, tuple[int, int]] = {}
+    for entry in pack.register:
+        if entry.status != "issued" or entry.layout not in pack.layouts:
+            continue
+        ids = [c.id for c in make_chunks(store.passages_of(entry.doc_id, entry.revision))]
+        status[entry.key] = (sum(i in done for i in ids), len(ids))
+    return status
 
 
 def extract_pack(pack: Pack, store: Store, connector: Connector, spec: ModelSpec, guard: BudgetGuard,

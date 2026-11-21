@@ -4,11 +4,17 @@ from __future__ import annotations
 import hashlib
 from typing import Mapping, Sequence
 
+from goldthread.aliases import normalise_term
 from goldthread.core import RecordSchema, RecordType
 
 
-def record_id(rt: RecordType, address: str, quote: str) -> str:
-    digest = hashlib.sha1(f"{rt.name}|{address}|{quote}".encode("utf-8")).hexdigest()
+def record_id(rt: RecordType, address: str, quote: str, fields: Mapping[str, str] | None = None) -> str:
+    """Stable id from type, address, quote and the type's identity fields (so two claims quoting one sentence
+    for different requirements stay two records)."""
+    key = f"{rt.name}|{address}|{quote}"
+    if rt.identity:
+        key += "|" + "|".join(normalise_term(str((fields or {}).get(f) or "")) for f in rt.identity)
+    digest = hashlib.sha1(key.encode("utf-8")).hexdigest()
     return f"{rt.prefix}-{digest[:8]}"
 
 
