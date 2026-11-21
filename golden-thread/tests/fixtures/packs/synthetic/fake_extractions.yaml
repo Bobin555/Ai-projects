@@ -1,0 +1,64 @@
+# Records the fake connector returns for each synthetic chunk (chunk id -> records).
+SYN-RG1@r1#0: []
+SYN-RG1@r1#1:
+  - type: Requirement
+    key: k1
+    address: SYN-RG1@r1#p1.2
+    quote: The reactor core shall be designed so that fuel design limits are not exceeded
+    fields:
+      - {name: code, value: Criterion 10}
+      - {name: text, value: The reactor core shall be designed so that fuel design limits are not exceeded}
+  - type: Requirement
+    key: k2
+    address: SYN-RG1@r1#p2.2
+    quote: The reactor shall have inherent protection against reactivity increases.
+    fields:
+      - {name: code, value: Criterion 11}
+      - {name: text, value: The reactor shall have inherent protection against reactivity increases.}
+SYN-SAR@r2#0:
+  - type: Claim
+    key: k1
+    address: SYN-SAR@r2#p1.2
+    quote: The design meets Criterion 10 because the core keeps fuel below the limit.
+    fields:
+      - {name: requirement_code, value: PDC 10}
+      - {name: text, value: The design meets Criterion 10}
+  - type: Argument
+    key: k2
+    address: SYN-SAR@r2#p1.2
+    quote: because the core keeps fuel below the limit
+    fields:
+      - {name: claim_key, value: k1}
+      - {name: method_code, value: ""}
+      - {name: text, value: the core keeps fuel below the limit}
+  - type: EvidenceRef
+    key: k3
+    address: SYN-SAR@r2#p1.3
+    quote: Fuel performance is confirmed in report TR-123.
+    fields:
+      - {name: argument_key, value: k2}
+      - {name: reference, value: TR-123}
+      - {name: available, value: "no"}
+  - type: Claim
+    key: k4
+    address: SYN-SAR@r2#p1.1
+    quote: The fuel temperature limit is 1700 C.
+    fields:
+      - {name: requirement_code, value: PDC 10}
+      - {name: text, value: The fuel limit is 1700 C}
+SYN-SAR@r2#1: []
+SYN-SE@r1#0:
+  - type: Finding
+    key: k1
+    address: SYN-SE@r1#p1.1
+    quote: The staff finds the fuel design acceptable for PDC 10, subject to Condition 1.
+    fields:
+      - {name: subject_code, value: MHTGR-DC 10}
+      - {name: conclusion, value: acceptable, subject to Condition 1}
+  - type: Condition
+    key: k2
+    address: SYN-SE@r1#p1.2
+    quote: "Condition 1: The applicant shall confirm the temperature limit before operation."
+    fields:
+      - {name: finding_key, value: k1}
+      - {name: text, value: The applicant shall confirm the temperature limit before operation.}
