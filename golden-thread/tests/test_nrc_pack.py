@@ -29,5 +29,6 @@ def test_nrc_pack_schema_and_layouts(tmp_path):
 
 def test_nrc_pack_register_has_confirmed_documents(tmp_path):
     keys = {e.key for e in load_pack(PACK, data_root=tmp_path).register}
-    assert {"ML17325A611@rev0", "ML20091L698@rev0", "ML24284A012@final", "ML25094A140@final",
-            "ML26295A004@final"} <= keys
+    assert keys == {"ML17325A611@rev0", "ML20091L698@rev0", "10CFR50@2026-11-19", "ML24047A310@rev3",
+                    "ML24284A012@final", "ML21246A289@rev2", "ML22327A201@final", "ML25071A402@rev2",
+                    "ML25094A140@final", "ML26295A007@final"}
