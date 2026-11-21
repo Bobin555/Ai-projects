@@ -50,6 +50,22 @@ def store(synthetic_pack, tmp_path):
 
 
 @pytest.fixture
+def extracted(synthetic_pack, store, tmp_path):
+    """The synthetic store with records extracted by the fake connector and linked."""
+    from goldthread.aliases import AliasTable
+    from goldthread.audit import AuditLog
+    from goldthread.budget import BudgetGuard, Ledger, PriceTable
+    from goldthread.extractor import extract_pack
+    from goldthread.linker import link_records
+    from goldthread.models import get_connector
+    guard = BudgetGuard(synthetic_pack.budget, Ledger(tmp_path / "ledger.sqlite3"), PriceTable.load(), "run-x")
+    extract_pack(synthetic_pack, store, get_connector("fake", pack=synthetic_pack), synthetic_pack.models["extract"],
+                 guard, AuditLog(tmp_path / "audit.jsonl"), "run-x")
+    link_records(store, synthetic_pack.schema, AliasTable.from_csv(synthetic_pack.aliases_path))
+    return store
+
+
+@pytest.fixture
 def rg1(synthetic_pack) -> list[Passage]:
     from goldthread.reader import read_pdf
     return read_pdf(pdf_path(synthetic_pack, "SYN-RG1@r1"), entry_of(synthetic_pack, "SYN-RG1@r1"))
