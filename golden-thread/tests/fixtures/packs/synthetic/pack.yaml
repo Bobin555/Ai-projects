@@ -1,0 +1,14 @@
+name: synthetic
+description: Synthetic documents for engine tests
+sensitivity: public
+offline: true
+source_dir: source
+withheld_patterns:
+  - '\[\[.*?\]\]'
+models:
+  extract: {provider: fake, model: fake, effort: low, max_tokens: 4000}
+  answer: {provider: fake, model: fake, effort: high, max_tokens: 4000}
+  judge: {provider: fake, model: fake, effort: low, max_tokens: 4000}
+budget:
+  per_run_usd: 1.0
+  per_month_usd: 5.0

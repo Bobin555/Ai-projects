@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "golden-thread"
+version = "0.1.0"
+description = "Traceable question-answering over controlled documents"
+requires-python = ">=3.11"
+dependencies = ["pdfplumber>=0.11", "PyYAML>=6", "anthropic>=2.12"]
+
+[project.optional-dependencies]
+dev = ["pytest>=9", "reportlab>=5"]
+
+[project.scripts]
+goldthread = "goldthread.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+goldthread = ["prices.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,7 @@
+layout: regulatory_guide
+looks_for: [Requirement, AcceptedMethod]
+instructions: |
+  Extract each numbered design criterion as a Requirement. Use the criterion name exactly as printed as the code.
+example: |
+  Passage: "2.1 Criterion 10 / The reactor core shall be designed ..."
+  Record: Requirement, code "Criterion 10", text "The reactor core shall be designed ..."

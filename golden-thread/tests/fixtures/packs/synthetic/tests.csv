@@ -1,0 +1,5 @@
+id,question,expected_sources,expected_point,expect_not_found,status
+q1,What is the fuel temperature limit?,SYN-SAR@r2,1650,no,approved
+q2,Which seismic isolation bearings are specified?,,,yes,approved
+q3,What does 50.34(a) require?,SYN-SAR@r2,preliminary safety analysis report,no,approved
+q4,What does the guide apply to?,SYN-RG1@r1,modular reactors,no,draft

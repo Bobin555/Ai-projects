@@ -1,0 +1,7 @@
+layout: safety_evaluation
+looks_for: [Finding, Condition]
+instructions: |
+  Extract each conclusion by the staff as a Finding, and each condition or limitation attached to it as a Condition.
+example: |
+  Passage: "The staff finds ... acceptable, subject to Condition 1."
+  Records: Finding (subject_code of the requirement or report), Condition (finding_key of that finding)

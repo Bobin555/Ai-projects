@@ -1,0 +1,5 @@
+doc_id,title,layout,revision,date,status,supersedes,url,sha256
+SYN-RG1,Synthetic Regulatory Guide 1,regulatory_guide,r1,2024-01-15,issued,,,
+SYN-SAR,Synthetic Safety Analysis Report,safety_report,r1,2024-03-01,superseded,,,
+SYN-SAR,Synthetic Safety Analysis Report,safety_report,r2,2024-09-01,issued,SYN-SAR@r1,,
+SYN-SE,Synthetic Safety Evaluation,safety_evaluation,r1,2024-11-20,issued,,,

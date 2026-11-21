@@ -1,0 +1,7 @@
+layout: safety_report
+looks_for: [Claim, Argument, EvidenceRef]
+instructions: |
+  Extract each claim that the design meets a requirement, the argument supporting it, and any evidence the argument cites.
+example: |
+  Passage: "The design meets Criterion 10 because ..."
+  Records: Claim (requirement_code "Criterion 10"), Argument (claim_key of that claim)
