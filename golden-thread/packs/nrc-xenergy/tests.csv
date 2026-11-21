@@ -1,1 +1,31 @@
 id,question,expected_sources,expected_point,expect_not_found,status
+q01,What is the purpose of Regulatory Guide 1.232?,ML17325A611@rev0,Guidance on how the general design criteria of 10 CFR 50 Appendix A may be adapted to develop principal design criteria for non-light-water reactors.,no,draft
+q02,Why are MHTGR-DCs 38 through 43 and 50 through 57 screened as not applicable to the MHTGR?,ML24284A012@final;ML17325A611@rev0,The MHTGR design has no pressure retaining reactor containment structure; it relies on a multibarrier functional containment.,no,draft
+q03,What does MHTGR-DC 16 require of the reactor functional containment?,ML17325A611@rev0;ML24047A310@rev3,Multiple barriers that control the release of radioactivity to the environment and keep the functional containment design conditions important to safety from being exceeded for as long as postulated accident conditions require.,no,draft
+q04,Which methodology does RG 1.233 endorse?,ML20091L698@rev0,"NEI 18-04, Revision 1, Risk-Informed Performance-Based Guidance for Non-Light Water Reactor Licensing Basis Development.",no,draft
+q05,Does the NRC staff take exceptions to NEI 18-04 in RG 1.233?,ML20091L698@rev0,No significant exceptions; the RG gives clarifications and points of emphasis.,no,draft
+q06,What must an application for a construction permit include under 10 CFR 50.34(a)?,10CFR50@2026-11-19,A preliminary safety analysis report.,no,draft
+q07,What does 10 CFR 50.34(a)(4) require an applicant for a construction permit to perform?,10CFR50@2026-11-19;ML25094A140@final,"A preliminary analysis and evaluation of the design and performance of structures, systems, and components.",no,draft
+q08,What radiation dose must an individual at the exclusion area boundary not exceed under 10 CFR 50.34(a)(1)?,10CFR50@2026-11-19;ML25094A140@final,25 rem total effective dose equivalent (TEDE).,no,draft
+q09,How does Xe-100 PDC 10 differ from MHTGR-DC 10?,ML24047A310@rev3,It does not: PDC 10 uses the language of MHTGR-DC 10 of RG 1.232 with no changes.,no,draft
+q10,How does Xe-100 PDC 16 change the wording of MHTGR-DC 16?,ML24284A012@final;ML24047A310@rev3,It replaces 'design conditions important to safety' with 'design limit'.,no,draft
+q11,Which proposed Xe-100 PDCs include criteria associated with normal operations or conditions?,ML24284A012@final,"PDCs 2, 4, 10, 13, 15, 19, 22, 26, 34, 44, 60, 61 and 64.",no,draft
+q12,What did the NRC staff conclude about Revision 3 of the Xe-100 Principal Design Criteria topical report?,ML24284A012@final,"A sufficient set of PDCs; Revision 3 is suitable for referencing in future licensing applications, subject to the limitations and conditions in the SE.",no,draft
+q13,What condition did the NRC staff attach to its acceptance of PDC-RFDC 11?,ML24284A012@final,"Future applicants must confirm that the safety analyses cover the full scope of the operating range, DBE and DBA conditions for the final design.",no,draft
+q14,"What wording did X-energy propose in PDC 14 instead of ingress of air, secondary coolant, or other fluids?",ML24284A012@final,"'Moisture ingress'; the staff conditions acceptance on its review of AOOs, DBEs and DBAs in a future application.",no,draft
+q15,"What is the AGR program focused on, and why does that matter for TRISO-X pebble fuel?",ML21246A289@rev2,Qualifying UCO TRISO-coated particles in cylindrical fuel compacts for prismatic fuel elements; the process conditions for making fuel spheres differ.,no,draft
+q16,How do X-energy's non-proprietary reports indicate the redaction of proprietary information?,ML25071A402@rev2;ML21246A289@rev2,With the marking [[ ]]P.,no,draft
+q17,Which revision of the TRISO-X Pebble Fuel Qualification Methodology topical report did the NRC evaluate?,ML22327A201@final,Revision 3.,no,draft
+q18,Approximately how many TRISO-coated particles are in each Xe-100 fuel pebble?,ML21246A289@rev2,"About 19,000.",no,draft
+q19,Which physics computer codes does the reactor core design methods topical report describe?,ML25071A402@rev2,VSOP and Siemens Simcenter STAR-CCM+.,no,draft
+q20,What is the thermal power of the Xe-100 reactor?,ML25071A402@rev2;ML25094A140@final;ML24284A012@final,200 MWt (80 MWe) per reactor.,no,draft
+q21,What is the XSTERM TRISO failure model based on?,ML26295A007@final,Its basis is withheld as proprietary ([[ ]]); SiC strength described by a Weibull distribution is challenged by stresses from fission gases.,no,draft
+q22,How many Xe-100 units are planned at the Long Mott Generating Station?,ML26295A007@final,"Four, with a total output of 800 MWt (320 MWe).",no,draft
+q23,Where is the Long Mott Generating Station proposed to be built?,ML26295A007@final,"Calhoun County, Texas, adjacent to Dow's Seadrift Operations.",no,draft
+q24,"By how much is graphite thermal conductivity reduced in the Long Mott DBA calculations, and why?",ML26295A007@final,"A further 20 percent, for uncertainties in the graphite conductivity correlation, fluence and irradiation temperature.",no,draft
+q25,What is the price of TRISO-X fuel per kilogram of uranium?,,,yes,draft
+q26,Which company manufactures the Xe-100 reactor pressure vessel?,,,yes,draft
+q27,What does the Natrium reactor use as its coolant?,,,yes,draft
+q28,When does the Long Mott operating license expire?,,,yes,draft
+q29,What is the half-life of tritium produced in the Xe-100 helium coolant?,,,yes,draft
+q30,Which manufacturer and model of steam turbine-generator will the Long Mott Generating Station use?,,,yes,draft

@@ -3,7 +3,10 @@ description: Public NRC documents for X-energy's Xe-100 and the Long Mott Genera
 sensitivity: public
 offline: false
 source_dir: null
-withheld_patterns: []   # set after inspecting the redactions in the downloaded documents
+withheld_patterns:   # X-energy's non-proprietary reports mark redactions "[[ ]]P"; NRC's SE prints "[[ ]]"
+  - '\[\[.*?\]\]P?'   # a complete redaction on one page, across passages
+  - '\[\['              # an opening with no closing on the page: OCR'd table cells, or a redaction crossing a page break
+  - '\]\]P'             # the closing of a redaction that started on the previous page (a bare "]]" also ends citations)
 models:
   extract: {provider: claude, model: claude-opus-5-5, effort: low, max_tokens: 16000}
   answer: {provider: claude, model: claude-opus-5-5, effort: high, max_tokens: 16000}

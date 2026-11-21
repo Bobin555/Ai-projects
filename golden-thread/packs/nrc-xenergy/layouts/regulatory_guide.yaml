@@ -1,9 +1,20 @@
 layout: regulatory_guide
 looks_for: [Requirement, AcceptedMethod]
 instructions: |
-  Extract each numbered design criterion as a Requirement, using the criterion name exactly as printed as the code
-  (for example MHTGR-DC 16). Extract each method or document the guide says the NRC staff finds acceptable as an
-  AcceptedMethod, using its printed identifier as the code (for example NEI 18-04).
+  Extract each numbered design criterion as a Requirement. In RG 1.232's appendix tables the criterion number is the
+  first column (headed "Criterion") and the second column's header names the set of criteria: "MHTGR-DC Title and
+  Content", "ARDC Title and Content" or "SFR-DC Title and Content". Form the code from the set and the number, for
+  example MHTGR-DC 16. Never use a bare "Criterion 16": in 10 CFR 50 Appendix A that names a different, light-water
+  criterion. Criteria marked "Not applicable to MHTGR" are not Requirements.
+  Extract each method or document the guide endorses or says the NRC staff finds acceptable as an AcceptedMethod,
+  using its printed identifier as the code (for example NEI 18-04).
 example: |
-  For a criterion heading followed by its text, create one Requirement (code = the criterion name, quote = the
-  criterion's first sentence copied exactly). For a sentence endorsing a method, create one AcceptedMethod.
+  Passage ML17325A611@rev0#p111.2 holds a row of the MHTGR-DC table, "16 | Containment design.", followed by the
+  criterion's text. It becomes one Requirement:
+    code: MHTGR-DC 16
+    quote: A reactor functional containment, consisting of multiple barriers internal and/or external to the reactor and its cooling system, shall be provided to control the release of radioactivity to the environment and to ensure that the functional containment design conditions important to safety are not exceeded for as long as postulated accident conditions require.
+    text: A reactor functional containment, consisting of multiple barriers internal and/or external to the reactor and its cooling system, shall be provided to control the release of radioactivity to the environment and to ensure that the functional containment design conditions important to safety are not exceeded for as long as postulated accident conditions require.
+  Passage ML20091L698@rev0#p6.5 endorses a method. It becomes one AcceptedMethod:
+    code: NEI 18-04
+    title: Risk-Informed Performance-Based Guidance for Non-Light Water Reactor Licensing Basis Development
+    quote: This RG endorses the principles and methodology in Nuclear Energy Institute (NEI) 18-04, Revision 1, “Risk-Informed Performance-Based Guidance for Non-Light Water Reactor Licensing Basis Development,” as one acceptable method for informing the licensing basis and determining the appropriate scope and level of detail for parts of applications for licenses, certifications, and approvals for non-LWRs.

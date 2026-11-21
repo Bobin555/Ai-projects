@@ -1,6 +1,11 @@
 # Outside this corpus
 
-- Proprietary content withheld from the public versions of the documents.
+- Proprietary content withheld from the public versions of the documents. X-energy's reports mark it "[[ ]]P" and
+  the NRC's TRISO-X safety evaluation "[[ ]]"; passages holding these markers are flagged as withheld. Redactions
+  drawn as black boxes with no printed marker cannot be detected from the text.
+- The TRISO-X topical report (ML21246A289) is a scanned document with a machine-read (OCR) text layer. Its OCR
+  errors (for example "l" for "1", "SO" for "50") are in the text the engine reads, so a quote that silently corrects
+  them fails verification, and redacted table cells appear only as bracket fragments.
 - Evidence documents: calculations, test reports and analyses are cited but not available.
 - Requests for additional information, audit reports and meeting summaries are not loaded.
 - Drawings and figures without a text layer.

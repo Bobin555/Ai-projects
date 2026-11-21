@@ -2,8 +2,15 @@ layout: cfr_section
 looks_for: [Requirement]
 instructions: |
   Extract each paragraph that states what an application must contain or show as a Requirement.
-  Use the paragraph citation exactly as printed as the code, for example 10 CFR 50.34(a)(1).
+  Use the paragraph citation as the code: the section number and paragraph letters, for example 10 CFR 50.34(a)(1).
+  Take the citation from the paragraph itself and the section it sits in. The heading shown with a passage can be the
+  page's running header (for example "10 CFR 50.33(i) (enhanced display) page 31 of 326"), which names the section at
+  the top of the page, not necessarily the section of this paragraph.
   The text field holds the requirement in the regulation's own words.
 example: |
-  For a paragraph headed with its citation, create one Requirement whose code is that citation and whose quote is
-  the sentence that states the requirement, copied exactly from the passage.
+  Passage 10CFR50@2026-11-19#p32.8 reads "(a) Preliminary safety analysis report. Each application for a
+  construction permit shall include a preliminary safety analysis report. The minimum information[1] to be included
+  shall consist of the following:". It sits in § 50.34 and becomes one Requirement:
+    code: 10 CFR 50.34(a)
+    quote: Each application for a construction permit shall include a preliminary safety analysis report.
+    text: Each application for a construction permit shall include a preliminary safety analysis report.

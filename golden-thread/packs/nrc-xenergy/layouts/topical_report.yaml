@@ -5,7 +5,14 @@ instructions: |
   Extract each statement that the design meets a requirement as a Claim (requirement_code = that requirement's code),
   the reasoning given for it as an Argument (claim_key = the claim's key; method_code = any method it follows), and
   each report, test or analysis the argument relies on as an EvidenceRef (reference = the identifier as printed,
-  available = no).
+  available = no). X-energy's criteria tables put each item in labelled cells ("Xe100 PDC", "Position", "Basis",
+  "Source"); the table text joins cells with " | ".
 example: |
-  A sentence saying the design satisfies a criterion becomes a Claim; the sentences explaining why become an Argument
-  pointing at that Claim's key; a cited report number becomes an EvidenceRef pointing at the Argument's key.
+  Passage ML24047A310@rev3#p34.2 is X-energy's table for PDC 10. Its "Xe100 PDC" cell becomes one Requirement:
+    code: PDC 10
+    quote: The reactor system and associated heat removal, control, and protection systems shall be designed with appropriate margin to ensure that specified acceptable system radionuclide release design limits are not exceeded during any condition of normal operation, including the effects of anticipated operational occurrences.
+    text: The reactor system and associated heat removal, control, and protection systems shall be designed with appropriate margin to ensure that specified acceptable system radionuclide release design limits are not exceeded during any condition of normal operation, including the effects of anticipated operational occurrences.
+  Its "Position" cell becomes one Claim:
+    requirement_code: MHTGR-DC 10
+    quote: PDC 10 of the Xe-100 design uses the language of MHTGR-DC 10 of RG 1.232 [4] with no changes.
+    text: Xe-100 PDC 10 adopts MHTGR-DC 10 of RG 1.232 unchanged.

@@ -2,8 +2,16 @@ layout: nrc_safety_evaluation
 looks_for: [Finding, Condition]
 instructions: |
   Extract each staff conclusion as a Finding. subject_code is the criterion or report the conclusion is about, as
-  printed (for example PDC 16, or the topical report's title or number). Extract each limitation or condition the
-  staff attaches as a Condition, with finding_key set to the key of the Finding it limits.
+  printed (for example PDC 16, or the topical report's title). Extract each limitation or condition the staff
+  attaches as a Condition, with finding_key set to the key of the Finding it limits. A numbered condition that itself
+  states what the staff accepts holds both: a Finding for the acceptance and a Condition pointing at it.
 example: |
-  A sentence such as "the staff finds ... acceptable, subject to the limitations in Section N" becomes a Finding;
-  each numbered limitation in Section N becomes a Condition pointing at that Finding's key.
+  Passage ML24284A012@final#p16.4, under "4.0 CONCLUSION", becomes one Finding:
+    subject_code: Xe-100 Principal Design Criteria Topical Report
+    conclusion: suitable for referencing in future licensing applications, subject to the limitations and conditions in the SE
+    quote: Revision 3 of the subject TR is therefore suitable for referencing in future licensing applications for the Xe-100 design.
+  Passage ML24284A012@final#p15.10, item (2) under "3.0 LIMITATIONS AND CONDITIONS", becomes one Finding:
+    subject_code: PDC-RFDC 11
+    conclusion: accepted on condition that future applicants confirm the safety analyses cover the full operating range, DBE and DBA conditions
+    quote: Accordingly, the NRC staff conditions the acceptance of PDC-RFDC 11 on confirmation by future licensing applicants referencing this TR that applicable safety analyses cover the full scope of the operating range, DBE, and DBA conditions for the final design.
+  and one Condition with finding_key set to that Finding's key, quoting the same sentence.
