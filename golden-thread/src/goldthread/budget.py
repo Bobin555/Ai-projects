@@ -124,11 +124,16 @@ class BudgetGuard:
                  now: Callable[[], datetime] = utc_now):
         self.budget, self.ledger, self.prices, self.run_id, self.now = budget, ledger, prices, run_id, now
 
-    def check(self, job: str, model: str, hosted: bool, input_tokens: int, max_output_tokens: int) -> None:
+    def check(self, job: str, model: str, hosted: bool, input_tokens: int, max_output_tokens: int,
+              fallback: bool = False) -> None:
+        """Refuse a call whose worst case would break a limit. With fallback on, the worst case is the requested
+        model's attempt plus a full attempt on the most expensive model."""
         if not hosted:
             return
         price = self.prices.get(model) or self.prices.most_expensive()
         needed = worst_case_cost(price, input_tokens, max_output_tokens)
+        if fallback:
+            needed += worst_case_cost(self.prices.most_expensive(), input_tokens, max_output_tokens)
         run_spent = self.ledger.run_total(self.run_id)
         if run_spent + needed > self.budget.per_run_usd:
             raise BudgetExceeded("run", needed, self.budget.per_run_usd - run_spent)
@@ -137,10 +142,18 @@ class BudgetGuard:
             raise BudgetExceeded("month", needed, self.budget.per_month_usd - month_spent)
 
     def record(self, job: str, model_requested: str, served_by: str, hosted: bool, usage: Usage,
-               fallback: bool, duration_s: float) -> SpendEntry:
-        fallback = fallback or served_by != model_requested
+               fallback: bool, duration_s: float, iterations: tuple[tuple[str, Usage], ...] = ()) -> SpendEntry:
+        fallback = fallback or served_by != model_requested or len(iterations) > 1
         cost, assumed = 0.0, False
-        if hosted:
+        if iterations:  # per-attempt usage is the full bill: price each attempt at the model that ran it
+            usage = Usage(*(sum(getattr(u, f.name) for _, u in iterations) for f in fields(Usage)))
+        if hosted and iterations:
+            for model, attempt in iterations:
+                price = self.prices.get(model)
+                if price is None:
+                    price, assumed = self.prices.most_expensive(), True
+                cost += actual_cost(price, attempt)
+        elif hosted:
             requested = self.prices.get(model_requested) or self.prices.most_expensive()
             served = self.prices.get(served_by)
             if served is None:

@@ -142,7 +142,7 @@ def extract_pack(pack: Pack, store: Store, connector: Connector, spec: ModelSpec
         prompt = Prompt(extract_system(recipe), chunk_user_text(chunk, title), chunk.passages, schema=schema)
         try:
             guard.check("extract", spec.model, connector.hosted, connector.estimate_input_tokens(spec, prompt),
-                        spec.max_tokens)
+                        spec.max_tokens, fallback=connector.fallback)
         except BudgetExceeded as exc:
             report.stopped = f"budget: {exc.limit} limit"
             report.remaining_chunks = [c.id for c, _, _ in work[i:] if c.id not in done]
@@ -150,7 +150,7 @@ def extract_pack(pack: Pack, store: Store, connector: Connector, spec: ModelSpec
         started = time.monotonic()
         raw = connector.structured(spec, prompt)
         cost = guard.record("extract", spec.model, raw.served_by, connector.hosted, raw.usage, raw.fallback,
-                            time.monotonic() - started).cost_usd
+                            time.monotonic() - started, iterations=raw.iterations).cost_usd
         if raw.stop_reason != "end_turn":
             report.failed_chunks.append(f"{chunk.id}: {raw.stop_reason}")
         stored = flagged = 0

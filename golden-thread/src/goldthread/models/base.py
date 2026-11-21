@@ -30,6 +30,9 @@ class RawBlock:
     citations: tuple[RawCitation, ...]
 
 
+Iterations = tuple[tuple[str, Usage], ...]  # (model, usage) per attempt when the provider falls back
+
+
 @dataclass(frozen=True)
 class RawAnswer:
     blocks: tuple[RawBlock, ...]
@@ -37,6 +40,7 @@ class RawAnswer:
     served_by: str
     fallback: bool
     usage: Usage
+    iterations: Iterations = ()
 
 
 @dataclass(frozen=True)
@@ -46,11 +50,13 @@ class RawStructured:
     served_by: str
     fallback: bool
     usage: Usage
+    iterations: Iterations = ()
 
 
 class Connector(Protocol):
     provider: str
     hosted: bool
+    fallback: bool  # the provider may retry on another model, so a call can cost more than one attempt
 
     def estimate_input_tokens(self, spec: ModelSpec, prompt: Prompt) -> int: ...
 

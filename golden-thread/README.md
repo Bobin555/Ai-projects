@@ -31,14 +31,15 @@ All commands take `--pack PATH` (and optionally `--data-root PATH`).
 | `extract` | `goldthread --pack packs/nrc-xenergy extract --docs ML24284A012` | Extracts draft records with the model, then links them. |
 | `review-export` | `goldthread --pack packs/nrc-xenergy review-export` | Writes draft records to a spreadsheet for review. |
 | `review-import` | `goldthread --pack packs/nrc-xenergy review-import data/nrc-xenergy/review/review-….csv --reviewer "J. Smith"` | Applies the reviewer's decisions (verified, corrected, rejected); quotes are re-checked. |
-| `ask` | `goldthread --pack packs/nrc-xenergy ask "How does Long Mott meet design criterion 16?"` | Answers with verified quotes, or "Not found" with the list of documents searched. `--html` for HTML. |
+| `ask` | `goldthread --pack packs/nrc-xenergy ask "How does Long Mott meet design criterion 16?"` | Answers with verified quotes, or "Not found" with the list of documents searched. An answer the model cut short is marked "Incomplete answer", never "Not found". `--html` for HTML. |
 | `trace` | `goldthread --pack packs/nrc-xenergy trace "PDC 16"` | Requirement → claim → argument → evidence cited → NRC finding and conditions. |
 | `check` | `goldthread --pack packs/nrc-xenergy check` | Coverage rules from the pack, and records citing superseded revisions. |
 | `test` | `goldthread --pack packs/nrc-xenergy test` | Runs the pack's approved test questions and writes a report. |
 | `spend` | `goldthread --pack packs/nrc-xenergy spend` | Spend for the last run and this month. |
 
-Exit codes: `0` success; `1` error (bad pack, offline violation, file problem, refusal, failed evaluation);
-`3` stopped by the budget (the message gives the `--resume RUN_ID` command).
+Exit codes: `0` success; `1` error (bad pack, offline violation, file problem, refusal, incomplete answer,
+failed evaluation); `3` stopped by the budget (for `extract` and `test` the message gives the `--resume RUN_ID`
+command; `ask` makes no model call).
 
 ## Where data lives
 

@@ -12,7 +12,7 @@ from typing import Sequence
 from goldthread.aliases import AliasTable
 from goldthread.answerer import ask
 from goldthread.audit import AuditLog
-from goldthread.budget import BudgetGuard, Ledger, PriceTable, render_cost_summary, summarise, validate_prices
+from goldthread.budget import BudgetExceeded, BudgetGuard, Ledger, PriceTable, render_cost_summary, summarise, validate_prices
 from goldthread.checks import render_checks_md, run_checks
 from goldthread.config import Pack, PackError, load_pack
 from goldthread.evaluate import render_eval_report_md, run_eval, write_eval_report
@@ -158,12 +158,17 @@ def cmd_review_import(ctx: Context, args) -> int:
 
 def cmd_ask(ctx: Context, args) -> int:
     run_id = new_run_id()
-    answer = ask(ctx.pack, ctx.store, ctx.aliases, ctx.connector("answer"), ctx.pack.models["answer"],
-                 ctx.guard(run_id), ctx.audit, args.question, run_id)
+    try:
+        answer = ask(ctx.pack, ctx.store, ctx.aliases, ctx.connector("answer"), ctx.pack.models["answer"],
+                     ctx.guard(run_id), ctx.audit, args.question, run_id)
+    except BudgetExceeded as exc:
+        print(f"Stopped: {exc}. No model call was made.", file=sys.stderr)
+        print("Raise the limit in pack.yaml, or wait for next month's budget, then ask again.", file=sys.stderr)
+        return EXIT_BUDGET
     render = render_answer_html if args.html else render_answer_md
     print(render(answer, ctx.pack.outside))
     ctx.cost(run_id)
-    return EXIT_ERROR if answer.kind == "refused" else EXIT_OK
+    return EXIT_ERROR if answer.kind in ("refused", "incomplete") else EXIT_OK
 
 
 def cmd_trace(ctx: Context, args) -> int:

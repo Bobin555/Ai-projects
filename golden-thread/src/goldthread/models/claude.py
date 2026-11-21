@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 
 from goldthread.core import ModelSpec, Usage
-from goldthread.models.base import Prompt, RawAnswer, RawBlock, RawCitation, RawStructured
+from goldthread.models.base import Iterations, Prompt, RawAnswer, RawBlock, RawCitation, RawStructured
 
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
@@ -15,9 +15,16 @@ def _usage(raw) -> Usage:
                  getattr(raw, "cache_creation_input_tokens", 0) or 0)
 
 
+def _iterations(raw, requested_model: str) -> Iterations:
+    """Per-attempt usage (server-side fallback): each attempt is billed at the model that ran it."""
+    return tuple((getattr(it, "model", None) or requested_model, _usage(it))
+                 for it in (getattr(raw, "iterations", None) or ()))
+
+
 class ClaudeConnector:
     provider = "claude"
     hosted = True
+    fallback = True  # requests are sent with fallbacks="default"
 
     def __init__(self, client=None):
         self._client = client
@@ -75,7 +82,8 @@ class ClaudeConnector:
                 blocks.append(RawBlock(block.text, citations))
         if response.stop_reason == "refusal":
             blocks = []
-        return RawAnswer(tuple(blocks), response.stop_reason, response.model, fallback, _usage(response.usage))
+        return RawAnswer(tuple(blocks), response.stop_reason, response.model, fallback, _usage(response.usage),
+                         _iterations(response.usage, spec.model))
 
     def structured(self, spec: ModelSpec, prompt: Prompt) -> RawStructured:
         response = self.client.beta.messages.create(
@@ -95,4 +103,5 @@ class ClaudeConnector:
                 data = {}
                 if stop_reason == "end_turn":
                     stop_reason = "invalid_json"
-        return RawStructured(data, stop_reason, response.model, fallback, _usage(response.usage))
+        return RawStructured(data, stop_reason, response.model, fallback, _usage(response.usage),
+                             _iterations(response.usage, spec.model))

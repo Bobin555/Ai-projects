@@ -8,6 +8,14 @@ from goldthread.answerer import Answer, Statement
 REFUSAL_TEXT = 'The model declined to answer (refusal). This is not a "not found" result.'
 
 
+def incomplete_text(answer: Answer) -> str:
+    if not answer.statements:
+        return (f"⚠ Incomplete answer: the model returned no text (stop reason: {answer.stop_reason or 'unknown'}). "
+                'This is not a "not found" result; ask again.')
+    return (f"⚠ Incomplete answer: the model stopped before finishing (stop reason: {answer.stop_reason}). "
+            'The statements below may be cut short. This is not a "not found" result.')
+
+
 def _statement_md(s: Statement) -> list[str]:
     if s.status == "verified":
         lines = [f"- {s.text}"]
@@ -34,6 +42,8 @@ def render_answer_md(answer: Answer, outside: str = "") -> str:
             body += ["", "Outside this corpus:", outside.strip()]
         return head + "\n".join(body) + "\n"
     lines = [line for s in answer.statements for line in _statement_md(s)]
+    if answer.kind == "incomplete":
+        lines = [incomplete_text(answer), "", *lines]
     footer = f"\n\n_Model: {answer.model} · served by: {answer.served_by} · run: {answer.run_id}_"
     return head + "\n".join(lines) + footer + "\n"
 
@@ -50,6 +60,8 @@ def render_answer_html(answer: Answer, outside: str = "") -> str:
         if outside.strip():
             parts.append(f"<p>Outside this corpus:</p><pre>{e(outside.strip())}</pre>")
     else:
+        if answer.kind == "incomplete":
+            parts.append(f"<p><strong>{e(incomplete_text(answer))}</strong></p>")
         parts.append("<ul>")
         for s in answer.statements:
             prefix = {"flagged": "⚠ ", "unsourced": "⚠ no source: "}.get(s.status, "")

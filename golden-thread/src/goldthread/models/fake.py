@@ -23,6 +23,8 @@ def _line_after(label: str, text: str) -> str:
 
 
 class FakeConnector:
+    fallback = False
+
     def __init__(self, script: Mapping[str, object] | None = None,
                  extractions: Mapping[str, list[dict]] | None = None,
                  hosted: bool = False, provider: str = "fake"):
@@ -40,6 +42,8 @@ class FakeConnector:
     def answer(self, spec: ModelSpec, prompt: Prompt) -> RawAnswer:
         scripted = self.script.get(prompt.user_text)
         stop_reason = "end_turn"
+        if isinstance(scripted, RawAnswer):
+            return scripted
         if scripted == "REFUSE":
             blocks: tuple[RawBlock, ...] = ()
             stop_reason = "refusal"
