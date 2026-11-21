@@ -59,7 +59,7 @@ def test_cli_search_no_model_call(run, monkeypatch):
 
     monkeypatch.setattr(cli, "get_connector", boom)
     code, out, _ = run("search", "fuel temperature limit")
-    assert code == 0 and "SYN-SAR@r2#p1.1" in out
+    assert code == 0 and "SYN-SAR@r2#p1.2" in out
 
 
 def test_cli_ask_html(run):

@@ -73,7 +73,7 @@ def search(store: Store, aliases: AliasTable, question: str, k: int = 10,
     filters = _filters(question, aliases)
     hits: list[Hit] = []
     for passage, score in store.fts_search(expr, include_superseded, k * 5):
-        if passage.kind == "no_text":
+        if passage.kind in ("no_text", "heading"):
             continue
         if filters and not any(_contains(passage.heading + "\n" + passage.text, f) for f in filters):
             continue

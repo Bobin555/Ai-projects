@@ -8,7 +8,7 @@ from pathlib import Path
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-FONT, SIZE, LEADING = "Helvetica", 10, 14
+FONT, BOLD, SIZE, LEADING = "Helvetica", "Helvetica-Bold", 10, 14
 LEFT, TOP_MARGIN, COL_WIDTH, ROW_HEIGHT = 72, 72, 150, 20
 
 
@@ -32,7 +32,26 @@ class ImageOnly:
     pass
 
 
-Block = Heading | Para | Table | ImageOnly
+@dataclass(frozen=True)
+class Lines:
+    """Lines drawn exactly as given, one per line, with normal leading (no gap between them)."""
+    lines: list[str]
+    bold_first: bool = False
+
+
+@dataclass(frozen=True)
+class Footer:
+    """Text drawn at the bottom of the page, like a page number."""
+    text: str
+
+
+@dataclass(frozen=True)
+class Picture:
+    """A raster image covering most of the page, as on a scanned page."""
+    pass
+
+
+Block = Heading | Para | Table | ImageOnly | Lines | Footer | Picture
 
 
 def make_pdf(path: Path, pages: list[list[Block]]) -> None:
@@ -42,10 +61,27 @@ def make_pdf(path: Path, pages: list[list[Block]]) -> None:
     for blocks in pages:
         y = height - TOP_MARGIN
         for block in blocks:
-            if isinstance(block, (Heading, Para)):
-                lines = [block.text] if isinstance(block, Heading) else textwrap.wrap(block.text, 90)
+            if isinstance(block, Footer):
                 c.setFont(FONT, SIZE)
-                for line in lines:
+                c.drawString(LEFT, 40, block.text)
+                continue
+            if isinstance(block, Picture):
+                from PIL import Image
+                from reportlab.lib.utils import ImageReader
+                c.drawImage(ImageReader(Image.new("RGB", (60, 80), (120, 120, 120))), LEFT, 120,
+                            width - 2 * LEFT, height - 240)
+                continue
+            if isinstance(block, (Heading, Para, Lines)):
+                if isinstance(block, Heading):
+                    lines, bold = [block.text], [True]
+                elif isinstance(block, Lines):
+                    lines = block.lines
+                    bold = [block.bold_first and i == 0 for i in range(len(lines))]
+                else:
+                    lines = textwrap.wrap(block.text, 90)
+                    bold = [False] * len(lines)
+                for line, is_bold in zip(lines, bold):
+                    c.setFont(BOLD if is_bold else FONT, SIZE)
                     c.drawString(LEFT, y, line)
                     y -= LEADING
             elif isinstance(block, Table):

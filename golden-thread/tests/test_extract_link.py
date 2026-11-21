@@ -69,7 +69,7 @@ def test_extract_creates_drafts_and_flags_bad_quote(ctx):
 
 def test_missing_required_field_flagged(ctx):
     conn = FakeConnector(extractions={"SYN-SE@r1#0": [{
-        "type": "Finding", "key": "k1", "address": "SYN-SE@r1#p1.1",
+        "type": "Finding", "key": "k1", "address": "SYN-SE@r1#p1.2",
         "quote": "The staff finds the fuel design acceptable", "fields": [{"name": "subject_code", "value": "PDC 10"}]}]})
     extract(ctx, connector=conn, only_docs=["SYN-SE"])
     assert by_quote(ctx["store"], "staff finds").flags == ("missing_field: conclusion",)
@@ -130,8 +130,8 @@ def test_linker_chunk_scope_and_reverse(ctx):
 def test_unresolved_links_reported(ctx):
     extract(ctx)
     rt = ctx["pack"].schema.record_types["Claim"]
-    orphan = Record(record_id(rt, "SYN-SAR@r2#p1.1", "The fuel temperature limit is 1650 C."), "Claim",
-                    {"key": "k9", "requirement_code": "PDC 99", "text": "x"}, "SYN-SAR@r2#p1.1",
+    orphan = Record(record_id(rt, "SYN-SAR@r2#p1.2", "The fuel temperature limit is 1650 C."), "Claim",
+                    {"key": "k9", "requirement_code": "PDC 99", "text": "x"}, "SYN-SAR@r2#p1.2",
                     "The fuel temperature limit is 1650 C.", "draft", chunk_id="SYN-SAR@r2#0")
     ctx["store"].upsert_record(orphan)
     report = link_records(ctx["store"], ctx["pack"].schema, ctx["aliases"])

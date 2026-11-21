@@ -87,7 +87,8 @@ def extract_system(recipe: LayoutRecipe) -> str:
 
 def chunk_user_text(chunk: Chunk, title: str) -> str:
     head = f"CHUNK: {chunk.id}\nDOCUMENT: {title} ({chunk.doc_id}@{chunk.revision})\nSECTION: {chunk.heading}\n\n"
-    return head + "".join(f"[{p.address}]\n{p.text}\n\n" for p in chunk.passages)
+    return head + "".join(f"[{p.address}]" + (f" ({p.heading})" if p.heading else "") + f"\n{p.text}\n\n"
+                          for p in chunk.passages)
 
 
 def _to_record(pack: Pack, store: Store, chunk: Chunk, item: Mapping, served_by: str, run_id: str) -> Record | None:

@@ -21,7 +21,7 @@ def test_trace_from_alias_code(extracted, aliases):
         assert rec(extracted, fragment).id in md
     assert extracted.records("Argument")[0].id in md
     assert "cited, not available in this pack" in md and "(draft, not yet reviewed)" in md
-    assert "`SYN-SAR@r2#p1.3`" in md and "<- meets" in md and "-> cites" in md
+    assert "`SYN-SAR@r2#p1.4`" in md and "<- meets" in md and "-> cites" in md
     assert rec(extracted, "inherent protection").id not in md  # Criterion 11 is not part of this thread
 
 
