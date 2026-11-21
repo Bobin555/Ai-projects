@@ -40,6 +40,16 @@ def synthetic_pack(synthetic_pack_dir, tmp_path) -> Pack:
 
 
 @pytest.fixture
+def store(synthetic_pack, tmp_path):
+    """A store holding the ingested synthetic pack."""
+    from goldthread.ingest import ingest_pack
+    from goldthread.store import Store
+    s = Store(tmp_path / "store.sqlite3")
+    ingest_pack(synthetic_pack, s)
+    return s
+
+
+@pytest.fixture
 def rg1(synthetic_pack) -> list[Passage]:
     from goldthread.reader import read_pdf
     return read_pdf(pdf_path(synthetic_pack, "SYN-RG1@r1"), entry_of(synthetic_pack, "SYN-RG1@r1"))
