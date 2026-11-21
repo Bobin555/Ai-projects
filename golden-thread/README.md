@@ -80,7 +80,9 @@ between records are recomputed, so `trace` and `check` reflect the decisions at 
 case (input tokens plus the maximum output, at the model's price in `src/goldthread/prices.yaml`) and stops cleanly
 if the run or month limit would be exceeded. Actual costs are recorded in the ledger. A stopped run lists what it did
 not process and resumes with `--resume RUN_ID`. Keep a spending limit on the Anthropic account as the outer safety
-net, and update `prices.yaml` when prices change.
+net, and update `prices.yaml` when prices change. Run one paid command at a time per pack: two at once share the
+budget but each checks it on its own. An extraction chunk the model cut short is not counted as extracted;
+`extract --resume RUN_ID` retries just those chunks.
 
 ## Offline packs
 

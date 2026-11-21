@@ -42,7 +42,8 @@ class ExtractReport:
     records_flagged: int = 0
     stopped: str | None = None
     remaining_chunks: list[str] = field(default_factory=list)
-    failed_chunks: list[str] = field(default_factory=list)  # "<chunk id>: <stop reason>"
+    failed_chunks: list[str] = field(default_factory=list)  # "<chunk id>: <stop reason>"; not marked done
+    skipped_documents: list[str] = field(default_factory=list)  # "<key>: <reason>" for issued documents not extracted
 
 
 def _top_heading(p: Passage) -> str:
@@ -124,16 +125,23 @@ def extract_pack(pack: Pack, store: Store, connector: Connector, spec: ModelSpec
                  audit: AuditLog, run_id: str, resume: bool = False, only_docs: Sequence[str] = ()) -> ExtractReport:
     wanted = set(only_docs)
     work: list[tuple[Chunk, LayoutRecipe, str]] = []
+    skipped: list[str] = []
     for entry in pack.register:
-        if entry.status != "issued" or entry.layout not in pack.layouts:
+        if entry.status != "issued":
             continue
         if wanted and entry.doc_id not in wanted and entry.key not in wanted:
+            continue
+        if entry.layout not in pack.layouts:
+            skipped.append(f"{entry.key}: no layout recipe '{entry.layout}'")
+            continue
+        if store.document(entry.doc_id, entry.revision) is None:
+            skipped.append(f"{entry.key}: not ingested")
             continue
         for chunk in make_chunks(store.passages_of(entry.doc_id, entry.revision)):
             work.append((chunk, pack.layouts[entry.layout], entry.title))
 
     done = store.chunks_done(run_id) if resume else set()
-    report = ExtractReport(run_id, chunks_total=len(work))
+    report = ExtractReport(run_id, chunks_total=len(work), skipped_documents=skipped)
     for i, (chunk, recipe, title) in enumerate(work):
         if chunk.id in done:
             report.chunks_done += 1
@@ -165,8 +173,9 @@ def extract_pack(pack: Pack, store: Store, connector: Connector, spec: ModelSpec
             stored += 1
             flagged += bool(rec.flags)
         report.records_flagged += flagged
-        store.mark_chunk_done(run_id, chunk.id)
-        report.chunks_done += 1
+        if raw.stop_reason == "end_turn":  # a chunk cut short stays undone, so --resume retries just that chunk
+            store.mark_chunk_done(run_id, chunk.id)
+            report.chunks_done += 1
         audit.write("extract_chunk", run_id=run_id, chunk=chunk.id, records=stored, flagged=flagged,
                     stop_reason=raw.stop_reason, served_by=raw.served_by, cost_usd=cost)
     return report

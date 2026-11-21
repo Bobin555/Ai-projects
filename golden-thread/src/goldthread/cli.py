@@ -127,6 +127,8 @@ def cmd_extract(ctx: Context, args) -> int:
     links = link_records(ctx.store, ctx.pack.schema, ctx.aliases)
     print(f"run {report.run_id}: chunks {report.chunks_done}/{report.chunks_total} · new records {report.records_new} · "
           f"flagged {report.records_flagged} · links created {links.created}, removed {links.removed}")
+    for item in report.skipped_documents:
+        print(f"  ⚠ document not extracted: {item}")
     for item in report.failed_chunks:
         print(f"  ⚠ chunk failed: {item}")
     if links.unresolved:
@@ -134,6 +136,10 @@ def cmd_extract(ctx: Context, args) -> int:
     ctx.cost(report.run_id)
     if report.stopped:
         return _budget_stop(ctx, "extract", report.stopped, report.run_id, report.remaining_chunks)
+    if report.failed_chunks:
+        print(f"{len(report.failed_chunks)} chunk(s) failed and count as not extracted. Retry just those with: "
+              f"goldthread --pack {ctx.pack.root} extract --resume {report.run_id}")
+        return EXIT_ERROR
     return EXIT_OK
 
 
@@ -177,7 +183,11 @@ def cmd_ask(ctx: Context, args) -> int:
 def cmd_trace(ctx: Context, args) -> int:
     titles = {d.key: d.title for d in ctx.store.documents()}
     searched, not_extracted = [], []
-    for key, (done, total) in extraction_status(ctx.pack, ctx.store).items():
+    status = extraction_status(ctx.pack, ctx.store)
+    for entry in ctx.pack.register:
+        if entry.status == "issued" and entry.key not in status:
+            not_extracted.append(f"{entry.key} — {entry.title} (no layout recipe '{entry.layout}')")
+    for key, (done, total) in status.items():
         label = f"{key} — {titles.get(key, '')}"
         if key not in titles:
             not_extracted.append(f"{label} (not ingested)")
