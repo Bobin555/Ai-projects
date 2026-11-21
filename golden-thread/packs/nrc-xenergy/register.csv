@@ -1,0 +1,11 @@
+doc_id,title,layout,revision,date,status,supersedes,url,sha256
+ML17325A611,"Regulatory Guide 1.232, Guidance for Developing Principal Design Criteria for Non-Light Water Reactors",regulatory_guide,rev0,2018-04,issued,,https://www.nrc.gov/docs/ML1732/ML17325A611.pdf,
+ML20091L698,"Regulatory Guide 1.233, Technology-Inclusive, Risk-Informed, and Performance-Based Methodology (endorses NEI 18-04)",regulatory_guide,rev0,2020-06,issued,,https://www.nrc.gov/docs/ML2009/ML20091L698.pdf,
+10CFR50.34,"10 CFR 50.34, Contents of applications; technical information",cfr_section,current,2026-11,issued,,https://www.nrc.gov/reading-rm/doc-collections/cfr/part050/part050-0034.html,
+ML24047A308,"X-energy, Xe-100 Principal Design Criteria Topical Report, Revision 3",topical_report,rev3,2024-02,issued,,https://www.nrc.gov/docs/ML2404/ML24047A308.pdf,
+ML24284A012,"NRC final safety evaluation, Xe-100 Principal Design Criteria Topical Report",nrc_safety_evaluation,final,2024-10,issued,,https://www.nrc.gov/docs/ML2428/ML24284A012.pdf,
+ML21246A289,"X-energy, TRISO-X Pebble Fuel Qualification Methodology Topical Report",topical_report,r0,2021-09,issued,,https://www.nrc.gov/docs/ML2124/ML21246A289.pdf,
+ML22327A199,"NRC feedback on the TRISO-X Pebble Fuel Qualification Methodology Topical Report",nrc_safety_evaluation,r0,2022-11,issued,,https://www.nrc.gov/docs/ML2232/ML22327A199.pdf,
+ML25071A399,"X-energy, Reactor Core Design Methods and Analysis Topical Report, Revision 2",topical_report,rev2,2025-03,issued,,https://www.nrc.gov/docs/ML2507/ML25071A399.pdf,
+ML25094A140,"NRC final safety evaluation, Reactor Core Design Methods and Analysis Topical Report",nrc_safety_evaluation,final,2025-08-20,issued,,https://www.nrc.gov/docs/ML2509/ML25094A140.pdf,
+ML26295A004,"NRC final safety evaluation, Long Mott Generating Station Construction Permit Application",nrc_safety_evaluation,final,2026-10-30,issued,,https://www.nrc.gov/docs/ML2629/ML26295A004.pdf,

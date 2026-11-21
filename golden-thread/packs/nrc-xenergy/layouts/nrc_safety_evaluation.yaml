@@ -1,0 +1,9 @@
+layout: nrc_safety_evaluation
+looks_for: [Finding, Condition]
+instructions: |
+  Extract each staff conclusion as a Finding. subject_code is the criterion or report the conclusion is about, as
+  printed (for example PDC 16, or the topical report's title or number). Extract each limitation or condition the
+  staff attaches as a Condition, with finding_key set to the key of the Finding it limits.
+example: |
+  A sentence such as "the staff finds ... acceptable, subject to the limitations in Section N" becomes a Finding;
+  each numbered limitation in Section N becomes a Condition pointing at that Finding's key.

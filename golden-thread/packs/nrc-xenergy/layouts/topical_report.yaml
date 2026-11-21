@@ -1,0 +1,11 @@
+layout: topical_report
+looks_for: [Requirement, Claim, Argument, EvidenceRef]
+instructions: |
+  Extract each principal design criterion the applicant adopts as a Requirement (code as printed, for example PDC 16).
+  Extract each statement that the design meets a requirement as a Claim (requirement_code = that requirement's code),
+  the reasoning given for it as an Argument (claim_key = the claim's key; method_code = any method it follows), and
+  each report, test or analysis the argument relies on as an EvidenceRef (reference = the identifier as printed,
+  available = no).
+example: |
+  A sentence saying the design satisfies a criterion becomes a Claim; the sentences explaining why become an Argument
+  pointing at that Claim's key; a cited report number becomes an EvidenceRef pointing at the Argument's key.

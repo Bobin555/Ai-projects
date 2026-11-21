@@ -1,0 +1,20 @@
+record_types:
+  Requirement: {prefix: REQ, fields: [code, text], required: [code, text]}
+  AcceptedMethod: {prefix: MTH, fields: [code, title], required: [code]}
+  Claim: {prefix: CLM, fields: [key, requirement_code, text], required: [requirement_code, text]}
+  Argument: {prefix: ARG, fields: [key, claim_key, method_code, text], required: [claim_key, text]}
+  EvidenceRef: {prefix: EVD, fields: [key, argument_key, reference, title, available], required: [argument_key, reference]}
+  Finding: {prefix: FND, fields: [key, subject_code, conclusion], required: [subject_code, conclusion]}
+  Condition: {prefix: CND, fields: [key, finding_key, text], required: [finding_key, text]}
+link_types:
+  meets: {from: Claim, field: requirement_code, to: {Requirement: code}, scope: code, reverse: false}
+  supports: {from: Argument, field: claim_key, to: {Claim: key}, scope: chunk, reverse: false}
+  follows: {from: Argument, field: method_code, to: {AcceptedMethod: code}, scope: code, reverse: false}
+  cites: {from: EvidenceRef, field: argument_key, to: {Argument: key}, scope: chunk, reverse: true}
+  evaluates: {from: Finding, field: subject_code, to: {AcceptedMethod: code, Requirement: code}, scope: code, reverse: false}
+  limits: {from: Condition, field: finding_key, to: {Finding: key}, scope: chunk, reverse: false}
+coverage:
+  - {name: Requirements with no claim, type: Requirement, missing_incoming: meets}
+  - {name: Claims with no argument, type: Claim, missing_incoming: supports}
+  - {name: Arguments citing evidence not loaded, type: Argument, has_outgoing: cites}
+  - {name: Findings with conditions, type: Finding, has_incoming: limits}

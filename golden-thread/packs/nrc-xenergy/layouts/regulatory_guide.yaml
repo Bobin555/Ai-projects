@@ -1,0 +1,9 @@
+layout: regulatory_guide
+looks_for: [Requirement, AcceptedMethod]
+instructions: |
+  Extract each numbered design criterion as a Requirement, using the criterion name exactly as printed as the code
+  (for example MHTGR-DC 16). Extract each method or document the guide says the NRC staff finds acceptable as an
+  AcceptedMethod, using its printed identifier as the code (for example NEI 18-04).
+example: |
+  For a criterion heading followed by its text, create one Requirement (code = the criterion name, quote = the
+  criterion's first sentence copied exactly). For a sentence endorsing a method, create one AcceptedMethod.

@@ -1,0 +1,10 @@
+layout: psar_chapter
+looks_for: [Claim, Argument, EvidenceRef]
+instructions: |
+  Extract each statement that the plant meets a requirement as a Claim (requirement_code = the requirement's code as
+  printed, for example PDC 16 or 10 CFR 50.34(a)(1)), the reasoning as an Argument (claim_key = the claim's key;
+  method_code = any approved topical report or method it relies on), and each document it cites as evidence as an
+  EvidenceRef (reference = the identifier as printed, available = no).
+example: |
+  A sentence saying the facility design conforms to a criterion becomes a Claim; the explanation becomes an Argument
+  pointing at that Claim's key; a referenced report becomes an EvidenceRef pointing at the Argument's key.
