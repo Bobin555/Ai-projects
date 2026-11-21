@@ -94,6 +94,10 @@ class Ledger:
         return self.db.execute("SELECT COALESCE(SUM(cost_usd), 0) FROM spend WHERE substr(ts, 1, 7) = ?",
                                (year_month,)).fetchone()[0]
 
+    def last_run_id(self) -> str | None:
+        row = self.db.execute("SELECT run_id FROM spend ORDER BY rowid DESC LIMIT 1").fetchone()
+        return row[0] if row else None
+
     def entries(self, run_id: str) -> list[SpendEntry]:
         rows = self.db.execute("SELECT * FROM spend WHERE run_id = ? ORDER BY rowid", (run_id,)).fetchall()
         return [_entry_from_row(r) for r in rows]
