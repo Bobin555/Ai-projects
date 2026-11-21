@@ -43,7 +43,11 @@ def ingest_pack(pack: Pack, store: Store) -> IngestReport:
         if sha256_of(path) != entry.sha256:
             report.skipped.append(f"{entry.key}: checksum mismatch")
             continue
-        passages = read_pdf(path, entry, pack.withheld_patterns)
+        try:
+            passages = read_pdf(path, entry, pack.withheld_patterns)
+        except Exception as exc:  # a damaged or non-PDF file must not stop the other documents
+            report.skipped.append(f"{entry.key}: unreadable PDF ({type(exc).__name__}: {exc})")
+            continue
         store.upsert_document(entry)
         store.replace_passages(entry.doc_id, entry.revision, passages)
         report.documents += 1

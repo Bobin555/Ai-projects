@@ -1,4 +1,5 @@
 data/
+packs/*/source/
 .venv/
 __pycache__/
 *.egg-info/

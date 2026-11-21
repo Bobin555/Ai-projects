@@ -100,7 +100,7 @@ def load_pack(root: Path, data_root: Path | None = None) -> Pack:
     schema = _parse_schema(_load_yaml(root / "records.yaml"))
 
     if data_root is None:
-        data_root = Path(os.environ["GT_DATA_DIR"]) if os.environ.get("GT_DATA_DIR") else Path.cwd() / "data"
+        data_root = default_data_root(root)
 
     return Pack(
         name=name,
@@ -122,6 +122,16 @@ def load_pack(root: Path, data_root: Path | None = None) -> Pack:
         root=root,
         data_dir=Path(data_root) / name,
     )
+
+
+def default_data_root(pack_root: Path) -> Path:
+    """$GT_DATA_DIR if set; else <project>/data for a pack in <project>/packs/<name>; else ./data."""
+    if os.environ.get("GT_DATA_DIR"):
+        return Path(os.environ["GT_DATA_DIR"])
+    pack_dir = Path(pack_root).resolve()
+    if pack_dir.parent.name == "packs":
+        return pack_dir.parent.parent / "data"
+    return Path.cwd() / "data"
 
 
 def pack_version(pack: Pack) -> str:

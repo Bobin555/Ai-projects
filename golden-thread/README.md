@@ -43,10 +43,36 @@ command; `ask` makes no model call).
 
 ## Where data lives
 
-Everything a pack produces lives under `data/<pack name>/` (or `$GT_DATA_DIR`): downloaded documents (`cache/`), the
-SQLite store, the spend ledger, the audit log, review sheets and reports. The folder is git-ignored on purpose: it
-holds copies of document text and must never be committed, and for a sensitive pack it is as sensitive as the most
-sensitive document in it.
+Everything a pack produces lives under `data/<pack name>/`: downloaded documents (`cache/`), the SQLite store, the
+spend ledger, the audit log, review sheets and reports. `data/` sits next to the `packs/` folder (here
+`golden-thread/data/`), whatever folder you run the command from; `$GT_DATA_DIR` or `--data-root` puts it elsewhere.
+The folder is git-ignored on purpose: it holds copies of document text and must never be committed, and for a
+sensitive pack it is as sensitive as the most sensitive document in it. An offline pack's documents go in
+`packs/<name>/source/`, which is git-ignored too. Every command warns if its data or source folder is inside a git
+repository and not ignored.
+
+`fetch` saves only files that start like a PDF (`%PDF-`) and never records the checksum of anything else. A cached
+file that does not match its register checksum is replaced only by a download that does, and is then kept in
+`cache/quarantine/` under a name that includes its checksum; it is never deleted or overwritten.
+
+## Review sheets
+
+`review-export` writes one row per draft record. Columns:
+
+| Column | Meaning |
+|---|---|
+| `id`, `type`, `status`, `address` | The record. Do not edit. |
+| `quote`, `fields_json` | What the model extracted. Edits here count as corrections. |
+| `quote_check` | Whether the quote is found word for word at the address now. |
+| `decision` | `verified`, `corrected` or `rejected`. Rows left blank are not changed. |
+| `corrected_fields_json` | Field values to change, as JSON, e.g. `{"requirement_code": "PDC 11"}`. Applied on top of `fields_json`. |
+| `corrected_quote` | A replacement quote. |
+| `note` | For the reviewer; not imported. |
+
+`review-import` re-checks every quote, refuses a row marked `verified` whose `quote` or `fields_json` was edited (use
+`corrected`), refuses unknown field names and invalid JSON, and leaves a record as draft if a required field is empty.
+The sheet must be saved as UTF-8 ("CSV UTF-8" in Excel); otherwise nothing is applied. After an import the links
+between records are recomputed, so `trace` and `check` reflect the decisions at once.
 
 ## Budgets
 

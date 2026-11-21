@@ -41,10 +41,10 @@ def test_fetch_downloads_and_records_checksum(online_pack_dir, tmp_path):
 
 
 def test_fetch_skips_present_file_with_matching_checksum(online_pack_dir, tmp_path):
-    write_register(online_pack_dir, sha=hashlib.sha256(b"x").hexdigest())
+    write_register(online_pack_dir, sha=hashlib.sha256(b"%PDF-x").hexdigest())
     pack = load(online_pack_dir, tmp_path)
     (pack.data_dir / "cache").mkdir(parents=True)
-    (pack.data_dir / "cache" / "DOC-A@r1.pdf").write_bytes(b"x")
+    (pack.data_dir / "cache" / "DOC-A@r1.pdf").write_bytes(b"%PDF-x")
     report = fetch_pack(pack, opener=never)
     assert report.already_present == ["DOC-A@r1"] and report.downloaded == []
 
@@ -52,19 +52,20 @@ def test_fetch_skips_present_file_with_matching_checksum(online_pack_dir, tmp_pa
 def test_fetch_registers_uploaded_file(online_pack_dir, tmp_path):
     pack = load(online_pack_dir, tmp_path)
     (pack.data_dir / "cache").mkdir(parents=True)
-    (pack.data_dir / "cache" / "DOC-A@r1.pdf").write_bytes(b"uploaded")
+    (pack.data_dir / "cache" / "DOC-A@r1.pdf").write_bytes(b"%PDF-uploaded")
     report = fetch_pack(pack, opener=never)
     assert report.recorded_checksums == ["DOC-A@r1"] and report.already_present == ["DOC-A@r1"]
-    assert load(online_pack_dir, tmp_path).register[0].sha256 == hashlib.sha256(b"uploaded").hexdigest()
+    assert load(online_pack_dir, tmp_path).register[0].sha256 == hashlib.sha256(b"%PDF-uploaded").hexdigest()
 
 
 def test_refetch_checksum_mismatch_quarantined(online_pack_dir, tmp_path):  # Review Focus 3
-    old = hashlib.sha256(b"old").hexdigest()
+    old = hashlib.sha256(b"%PDF-old").hexdigest()
     write_register(online_pack_dir, sha=old)
     pack = load(online_pack_dir, tmp_path)
-    report = fetch_pack(pack, opener=lambda url: b"new")
+    report = fetch_pack(pack, opener=lambda url: b"%PDF-new")
     assert report.mismatched == ["DOC-A@r1"] and report.downloaded == []
-    assert (pack.data_dir / "cache" / "quarantine" / "DOC-A@r1.pdf").read_bytes() == b"new"
+    quarantined = list((pack.data_dir / "cache" / "quarantine").glob("DOC-A@r1.*.pdf"))
+    assert [q.read_bytes() for q in quarantined] == [b"%PDF-new"]
     assert not (pack.data_dir / "cache" / "DOC-A@r1.pdf").exists()
     assert load(online_pack_dir, tmp_path).register[0].sha256 == old
 

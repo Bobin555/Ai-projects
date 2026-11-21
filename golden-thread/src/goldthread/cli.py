@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import secrets
+import subprocess
 import sys
 from contextlib import nullcontext
 from datetime import datetime, timezone
@@ -145,12 +146,14 @@ def cmd_review_export(ctx: Context, args) -> int:
 
 
 def cmd_review_import(ctx: Context, args) -> int:
-    report = import_review(ctx.store, Path(args.path), args.reviewer)
+    report = import_review(ctx.store, Path(args.path), args.reviewer, ctx.pack.schema)
     print(f"applied: {report.applied}")
     for row in report.rejected_rows:
         print(f"  rejected {row}")
     for record_id in report.reverified_failed:
         print(f"  ⚠ {record_id}: quote does not match the source; left as draft")
+    for record_id in report.missing_fields:
+        print(f"  ⚠ {record_id}: a required field is empty; left as draft")
     links = link_records(ctx.store, ctx.pack.schema, ctx.aliases)  # decisions change which links hold
     print(f"links recomputed: {links.created} added, {links.removed} removed")
     return EXIT_ERROR if report.rejected_rows else EXIT_OK
@@ -221,10 +224,41 @@ COMMANDS = {"fetch": cmd_fetch, "ingest": cmd_ingest, "search": cmd_search, "ext
             "trace": cmd_trace, "check": cmd_check, "test": cmd_test, "spend": cmd_spend}
 
 
+def git_would_commit(path: Path) -> Path | None:
+    """The repository top level if `path` lies inside a git work tree and is not ignored there; else None."""
+    probe = Path(path).resolve()
+    while not probe.exists():
+        probe = probe.parent
+    try:
+        top = subprocess.run(["git", "-C", str(probe), "rev-parse", "--show-toplevel"], capture_output=True,
+                             text=True, check=False)
+        if top.returncode != 0:
+            return None
+        # Probe a file inside the folder: a directory pattern such as packs/*/source/ cannot match a folder
+        # that does not exist yet, but it does match anything under it.
+        inside = Path(path).resolve() / "goldthread-probe"
+        ignored = subprocess.run(["git", "-C", top.stdout.strip(), "check-ignore", "-q", str(inside)],
+                                 capture_output=True, check=False)
+    except OSError:  # git is not installed
+        return None
+    return Path(top.stdout.strip()) if ignored.returncode == 1 else None
+
+
+def _warn_if_committable(pack: Pack) -> None:
+    folders = [("data folder", pack.data_dir)] + ([("source folder", pack.source_dir)] if pack.source_dir else [])
+    for label, folder in folders:
+        top = git_would_commit(folder)
+        if top is not None:
+            print(f"warning: {label} {folder.resolve()} is inside the git repository {top} and is not git-ignored; "
+                  "documents and records written there could be committed. Add it to .gitignore or set GT_DATA_DIR.",
+                  file=sys.stderr)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         pack = load_pack(Path(args.pack), Path(args.data_root) if args.data_root else None)
+        _warn_if_committable(pack)
         if args.command == "fetch" and pack.offline:
             raise OfflineError("offline pack: fetch is disabled")
         with no_network() if pack.offline else nullcontext():

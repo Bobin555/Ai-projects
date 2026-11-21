@@ -1,9 +1,12 @@
 import csv
 from datetime import datetime, timezone
+from pathlib import Path
 
+from goldthread.config import load_pack
 from goldthread.review import REVIEW_COLUMNS, export_review, import_review
 
 NOW = lambda: datetime(2026, 11, 21, 12, 0, tzinfo=timezone.utc)  # noqa: E731
+SCHEMA = load_pack(Path(__file__).parent / "fixtures" / "packs" / "synthetic", data_root=Path("unused")).schema
 
 
 def read_sheet(path):
@@ -39,7 +42,7 @@ def test_import_verified_sets_reviewer_and_time(extracted, tmp_path):
     columns, rows = read_sheet(path)
     row_for(rows, "TR-123")["decision"] = "verified"
     write_sheet(path, columns, rows)
-    report = import_review(extracted, path, "alice", now=NOW)
+    report = import_review(extracted, path, "alice", SCHEMA, now=NOW)
     rec = extracted.record(row_for(rows, "TR-123")["id"])
     assert report.applied == 1 and (rec.status, rec.reviewed_by, rec.reviewed_at) == (
         "verified", "alice", "2026-11-21T12:00:00Z")
@@ -51,7 +54,7 @@ def test_import_rejected(extracted, tmp_path):
     columns, rows = read_sheet(path)
     row_for(rows, "1700 C")["decision"] = "rejected"
     write_sheet(path, columns, rows)
-    import_review(extracted, path, "alice", now=NOW)
+    import_review(extracted, path, "alice", SCHEMA, now=NOW)
     assert extracted.record(row_for(rows, "1700 C")["id"]).status == "rejected"
 
 
@@ -62,7 +65,7 @@ def test_import_corrected_fields(extracted, tmp_path):
     row = row_for(rows, "TR-123")
     row["decision"], row["corrected_fields_json"] = "corrected", '{"title": "Fuel performance report"}'
     write_sheet(path, columns, rows)
-    report = import_review(extracted, path, "bob", now=NOW)
+    report = import_review(extracted, path, "bob", SCHEMA, now=NOW)
     rec = extracted.record(row["id"])
     assert report.applied == 1 and rec.status == "corrected" and rec.fields["title"] == "Fuel performance report"
 
@@ -74,7 +77,7 @@ def test_import_excel_bom_reordered_columns_and_edited_quote(extracted, tmp_path
     row = row_for(rows, "TR-123")
     row["decision"], row["corrected_quote"] = "corrected", "Fuel performance is proven in report TR-999."
     write_sheet(path, list(reversed(columns)), rows)  # Excel-style save: BOM, different column order
-    report = import_review(extracted, path, "carol", now=NOW)
+    report = import_review(extracted, path, "carol", SCHEMA, now=NOW)
     rec = extracted.record(row["id"])
     assert report.reverified_failed == [row["id"]] and report.applied == 0
     assert rec.status == "draft" and rec.flags[0].startswith("quote_failed")
@@ -86,7 +89,7 @@ def test_import_verified_with_failing_quote_stays_draft(extracted, tmp_path):
     columns, rows = read_sheet(path)
     row_for(rows, "1700 C")["decision"] = "verified"
     write_sheet(path, columns, rows)
-    report = import_review(extracted, path, "alice", now=NOW)
+    report = import_review(extracted, path, "alice", SCHEMA, now=NOW)
     assert report.reverified_failed == [row_for(rows, "1700 C")["id"]]
     assert extracted.record(row_for(rows, "1700 C")["id"]).status == "draft"
 
@@ -99,6 +102,6 @@ def test_import_unknown_id_and_bad_json_reported(extracted, tmp_path):
     rows[1]["decision"], rows[1]["corrected_fields_json"] = "corrected", "{bad"
     rows[2]["decision"] = "maybe"
     write_sheet(path, columns, rows)
-    report = import_review(extracted, path, "alice", now=NOW)
+    report = import_review(extracted, path, "alice", SCHEMA, now=NOW)
     assert report.rejected_rows == ["row 2: unknown id NOPE-1", "row 3: invalid corrected_fields_json",
                                     "row 4: unknown decision 'maybe'"]
