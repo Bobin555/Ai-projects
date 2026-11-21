@@ -130,14 +130,21 @@ pack register ──► fetch (cache, checksums) ──► read (pages, headings
 11. **Checks.** Coverage (requirements with no claim, claims with no argument, arguments citing evidence that is not loaded, findings with conditions) and revision drift (citations of superseded revisions). Value-consistency checks come later.
 12. **Test runner.** Runs `tests.csv`: question, expected source(s), expected key point, or expected "not found". Scores: expected source in the top 10 results; share of displayed quotes that pass verification; expected source cited; "not found" given for out-of-corpus questions. Writes a report and stores the results with the model, back-end and pack version.
 13. **Audit log.** One JSON line per question: time, pack version, question, passages retrieved, model and back-end, answer and verifier results. Stored with the pack's data and git-ignored.
-14. **Command line.** `fetch`, `ingest`, `extract`, `review-export`, `review-import`, `ask`, `trace`, `check`, `test`.
+14. **Budget guard.** Stops spending beyond limits the user sets in `pack.yaml` (`budget: {per_run_usd, per_month_usd}`). It sits inside the spending limit on the Anthropic account, which stays as the outer safety net.
+    - Before each paid call, the engine estimates its worst-case cost: counted input tokens plus the call's maximum output tokens, at the model's prices. If that would take the run or the month past its limit, the run stops before the call is made.
+    - After each call, the actual cost from the response's reported usage (input, output including thinking, cache reads and writes, and the Batch API's discounted rate where used) is written to a spend ledger, kept with the pack's data and git-ignored.
+    - Prices come from a dated price table in the engine's configuration. A model missing from the table cannot run; it is never treated as free. Local models cost nothing, but their token counts and run times are still recorded.
+    - A stopped run saves its progress, lists exactly which documents or questions were not processed, and can be resumed with `--resume` once the limit is raised. A partial run is always reported as partial.
+    - Every run ends with a cost summary: tokens and cost per job and model, spend so far this month, and budget remaining. The `spend` command shows the ledger totals.
+15. **Command line.** `fetch`, `ingest`, `extract`, `review-export`, `review-import`, `ask`, `trace`, `check`, `test`, `spend`.
 
 ### 7.3 Pack format
 
 ```
 packs/<name>/
   pack.yaml          name, description, sensitivity (public or sensitive), offline (true or false),
-                     models per job (extract, answer, judge), embedding model (optional)
+                     models per job (extract, answer, judge), embedding model (optional),
+                     budget limits (per run, per month)
   register.csv       documents, revisions, status, URLs, checksums
   records.yaml       record types, fields, link types
   layouts/           one extraction recipe per document layout
@@ -211,7 +218,7 @@ Links: Claim `meets` Requirement · Argument `supports` Claim · Argument `follo
 
 ### 7.6 What goes in the repository
 
-Code, pack configuration (registers with accession numbers, URLs and checksums), layouts, aliases, rules, tests and docs. Never: downloaded documents, extracted text, stores, logs, review sheets containing document text, or sensitive or personal material.
+Code, pack configuration (registers with accession numbers, URLs and checksums), layouts, aliases, rules, tests and docs. Never: downloaded documents, extracted text, stores, logs, the spend ledger, review sheets containing document text, or sensitive or personal material.
 
 ## 8. Success criteria (v1)
 
@@ -220,6 +227,7 @@ Code, pack configuration (registers with accession numbers, URLs and checksums),
 - Every out-of-corpus test question is answered "not found".
 - The synthetic second pack runs with no engine changes.
 - An `offline` pack completes its tests with outbound network blocked.
+- A run given a tiny budget stops before exceeding it, reports what it did not process, and resumes correctly.
 
 ## 9. Decided with the user
 
@@ -232,6 +240,7 @@ Code, pack configuration (registers with accession numbers, URLs and checksums),
 - Model providers: Claude (Anthropic API or Microsoft Foundry), Azure OpenAI and local models, through two connectors.
 - Models are chosen per job in a fixed table, set from test results; no automatic model routing.
 - Build phase: Claude through the Anthropic API in this session (the API key is entered through a secure form, never in chat). The same tests then run with a local model through Ollama on the user's laptop, to measure the gap.
+- A budget guard in the engine (per run and per month), in addition to the spending limit on the Anthropic account.
 
 ## 10. Calls made by Claude (open to change)
 
@@ -249,6 +258,7 @@ Code, pack configuration (registers with accession numbers, URLs and checksums),
 - Public-pack extraction may use the Batch API (half price) when turnaround isn't urgent.
 - A spending limit on the Anthropic account, set by the user.
 - The laptop's local model is chosen once the user reports the laptop's memory and GPU; a small (around 8B) instruct model is the starting default.
+- Default budget limits for the public pack: $20 per run and $150 per month, adjustable in `pack.yaml`.
 
 ## 11. Open questions
 
